@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>여행 플래너</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+<symbol id="i-up" viewBox="0 0 24 24"><path d="M6 14l6-6 6 6"/></symbol>
+<symbol id="i-down" viewBox="0 0 24 24"><path d="M6 10l6 6 6-6"/></symbol>
+<symbol id="i-left" viewBox="0 0 24 24"><path d="M14 6l-6 6 6 6"/></symbol>
+<symbol id="i-right" viewBox="0 0 24 24"><path d="M10 6l6 6-6 6"/></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M10 11v6M14 11v6M6 7l1 12h10l1-12M9 7V4h6v3"/></symbol>
+<symbol id="i-car" viewBox="0 0 24 24"><path d="M4 15v-3l2-5h12l2 5v3M4 15h16M4 15v3M20 15v3"/><circle cx="8" cy="13" r=".8"/><circle cx="16" cy="13" r=".8"/></symbol>
+<symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></symbol>
+<symbol id="i-nav" viewBox="0 0 24 24"><path d="M12 3l7 17-7-4-7 4z"/></symbol>
+</svg>
+
+<div id="app">
+  <svg id="map" role="img" aria-label="일정 경로 지도"></svg>
+  <div class="top">
+    <button class="pill" id="open-s">장소 검색</button>
+    <button class="fab" id="refit" aria-label="이 날 경로 전체 보기"></button>
+    <button class="fab" id="gps" aria-label="내 위치 표시"></button>
+  </div>
+  <div id="toast" role="status"></div>
+
+  <section id="sheet" aria-label="여행 일정">
+    <div id="dz">
+      <div class="handle"></div>
+      <div class="head">
+        <input id="title" aria-label="여행 이름" value="제주 가을 여행">
+        <input id="dstart" type="date" aria-label="출발일" value="2026-10-24">
+      </div>
+    </div>
+    <div id="grab">
+      <div id="tabs" role="tablist"></div>
+      <div id="sum"></div>
+      <div id="gstat" role="status"></div>
+    </div>
+    <div id="list"></div>
+  </section>
+
+  <div id="search" role="dialog" aria-label="장소 검색">
+    <div class="sh">
+      <button class="ib" id="sclose" aria-label="검색 닫기"></button>
+      <input id="sq" type="search" placeholder="성산일출봉, 카페, 흑돼지" autocomplete="off">
+    </div>
+    <div class="chips" id="sc"></div>
+    <div id="sres"></div>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/util.js"></script>
+<script src="js/data.js"></script>
+<script src="js/core.js"></script>
+<script src="js/map.js"></script>
+<script src="js/sheet.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/gps.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

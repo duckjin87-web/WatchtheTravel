@@ -1,0 +1,10 @@
+{
+  "name": "travel-planner",
+  "version": "0.1.0",
+  "private": true,
+  "description": "날짜별 경로, 이동시간, 근처 맛집·카페, GPS 진행 확인 여행 플래너",
+  "scripts": {
+    "dev": "npx serve .",
+    "dev:api": "npx vercel dev"
+  }
+}
