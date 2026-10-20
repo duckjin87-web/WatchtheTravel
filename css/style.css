@@ -69,5 +69,15 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--ink);outline-of
 #sq{flex:1;height:40px;border:1px solid var(--line);border-radius:20px;padding:0 14px;background:var(--paper);font-size:14px}
 #sres{flex:1;overflow-y:auto;margin-top:6px}
 .sr{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 0;border-top:1px solid var(--line)}
+#kmap{position:absolute;inset:0;z-index:0}
+/* 카카오맵 오버레이 (지도 타일이 항상 밝아서 고정 색을 쓴다) */
+.ks{position:relative;width:24px;height:24px;border-radius:50%;border:2px solid #fff;color:#fff;font-size:12px;font-weight:500;display:grid;place-items:center;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.ks b{position:absolute;left:28px;top:50%;transform:translateY(-50%);white-space:nowrap;color:#14181D;font-size:12px;font-weight:500;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 3px #fff}
+.ks.open{outline:2px solid #14181D;outline-offset:3px}.ks.done{opacity:.5}
+.kd{width:12px;height:12px;border-radius:50%;border:1.5px solid #fff;opacity:.7;cursor:pointer}
+.kn{width:12px;height:12px;border-radius:50%;background:#fff;border:1.5px solid #14181D;cursor:pointer}.kn.cafe{border-radius:2px}.kn.on{background:#14181D}
+.kc{background:#fff;border:1.2px solid;border-radius:10px;padding:0 8px;line-height:18px;font-size:12px;font-weight:500;color:#14181D;pointer-events:none}
+.kme{width:16px;height:16px;border-radius:50%;background:#2F7FC1;border:3px solid #fff;box-shadow:0 0 0 12px rgba(47,127,193,.15);pointer-events:none}
+a.chip{text-decoration:none;color:inherit}
 #toast{position:absolute;left:50%;top:60px;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:8px 14px;border-radius:18px;font-size:13px;z-index:7;opacity:0;pointer-events:none;transition:opacity .2s;white-space:nowrap}
 #toast.on{opacity:1}

@@ -28,19 +28,24 @@ function detail(i,r){
  if(i<trip.days[sd].items.length-1)h+='<button class="chip" data-act="down">'+ic('down',16)+'아래로</button>';
  if(sd>0)h+='<button class="chip" data-act="prevday">'+ic('left',16)+'전날로</button>';
  if(sd<n-1)h+='<button class="chip" data-act="nextday">다음날로'+ic('right',16)+'</button>';
- h+='<button class="chip" data-act="del">'+ic('trash',16)+'삭제</button></div>';
+ h+='<button class="chip" data-act="del">'+ic('trash',16)+'삭제</button>';
+ if(KM)h+='<a class="chip" href="'+kakaoUrl(r.p)+'" target="_blank" rel="noopener">카카오맵에서 보기</a>';
+ h+='</div>';
  h+='<div class="nbh"><span class="nm" style="font-size:14px">근처 맛집·카페</span><span class="sub">'+L.length+'곳</span></div>';
  h+='<div class="chips">'+[1,3,5,10].map(v=>chip('r',v,v+'km',nb.r===v)).join('')+'</div>';
  h+='<div class="chips">'+['전체','맛집','카페'].map(v=>chip('t',v,v,nb.t===v)).join('')+'</div>';
- h+='<div class="chips">'+[['전체','출처 전체'],['카카오','카카오'],['네이버','네이버']].map(a=>chip('s',a[0],a[1],nb.s===a[0])).join('')+'</div>';
- h+='<div class="chips">'+[[0,'평점 전체'],[3.5,'3.5+'],[4,'4.0+'],[4.3,'4.3+']].map(a=>chip('m',a[0],a[1],nb.min===a[0])).join('')+'</div>';
+ if(!KM)h+='<div class="chips">'+[['전체','출처 전체'],['카카오','카카오'],['네이버','네이버']].map(a=>chip('s',a[0],a[1],nb.s===a[0])).join('')+'</div>';
+ if(!KM)h+='<div class="chips">'+[[0,'평점 전체'],[3.5,'3.5+'],[4,'4.0+'],[4.3,'4.3+']].map(a=>chip('m',a[0],a[1],nb.min===a[0])).join('')+'</div>';
  h+='<div style="margin-top:8px">';
- if(!L.length)h+='<p class="sub" style="margin:10px 0 0">이 조건에 맞는 곳이 없어요. 반경을 넓히거나 평점 조건을 낮춰 보세요.</p>';
+ const ks=KM&&KM.near(curP());
+ if(ks&&ks.busy)h+='<p class="sub" style="margin:10px 0 0">근처 장소를 불러오는 중이에요…</p>';
+ else if(ks&&ks.err)h+='<p class="sub" style="margin:10px 0 0">카카오 장소 검색에 실패했어요. 잠시 후 다시 시도해 주세요.</p>';
+ else if(!L.length)h+='<p class="sub" style="margin:10px 0 0">이 조건에 맞는 곳이 없어요. 반경을 넓히'+(KM?'거나 종류를 바꿔':'거나 평점 조건을 낮춰')+' 보세요.</p>';
  L.slice(0,8).forEach(e=>{
   h+='<div class="nb'+(nb.hi===e.p.id?' on':'')+'" data-act="hi" data-id="'+e.p.id+'"><div><div class="nm" style="font-size:14px">'+e.p.n+'<span class="cat">'+e.p.c+'</span></div><div class="sub">'+(e.p.r!=null?'<span class="star">★</span> '+e.p.r.toFixed(1)+' ('+e.p.v+')':'평점 없음')+' · '+fmtD(e.d)+' · '+e.p.src+'</div></div><button class="ib" data-act="addnb" data-id="'+e.p.id+'" aria-label="'+e.p.n+' 일정에 추가">'+ic('plus')+'</button></div>';
  });
  if(L.length>8)h+='<p class="sub" style="margin:6px 0 0">가까운 순으로 8곳만 보여줘요.</p>';
- h+='</div><p class="foot">예시 데이터예요. 카카오와 네이버 검색 결과를 합쳐 보여주고, 같은 장소는 하나로 묶어요. 네이버 검색 API는 평점을 주지 않아서 평점은 카카오 장소 상세 값만 표시해요.</p></div>';
+ h+='</div><p class="foot">'+(KM?'카카오 로컬 검색 결과예요. 카카오 API는 평점을 주지 않아서 평점은 아직 표시하지 않아요.':'예시 데이터예요. 카카오와 네이버 검색 결과를 합쳐 보여주고, 같은 장소는 하나로 묶어요. 네이버 검색 API는 평점을 주지 않아서 평점은 카카오 장소 상세 값만 표시해요.')+'</p></div>';
  return h;
 }
 function renderAll(keep){renderTabs();pg=prog();renderG();renderList();drawMap();}
@@ -79,8 +84,13 @@ function renderSearch(){
  $('#sc').innerHTML=['전체','명소','맛집','카페'].map(v=>'<button class="chip" data-c="'+v+'" aria-pressed="'+(scat===v)+'">'+v+'</button>').join('');
  const q=sq.trim(),inTrip={};
  trip.days.forEach((d,i)=>d.items.forEach(it=>{(inTrip[it.id]=inTrip[it.id]||[]).push(i+1);}));
- const res=DB.filter(p=>(scat==='전체'||p.c===scat)&&(!q||p.n.indexOf(q)>-1||p.c.indexOf(q)>-1)).slice(0,40);
- $('#sres').innerHTML=res.length?res.map(p=>'<div class="sr"><div><div class="nm" style="font-size:14px">'+p.n+'<span class="cat">'+p.c+'</span></div><div class="sub">'+(p.r!=null?'<span class="star">★</span> '+p.r.toFixed(1)+' ('+p.v+')':'')+(inTrip[p.id]?(p.r!=null?' · ':'')+inTrip[p.id].join(', ')+'일차 포함':'')+'</div></div><button class="chip" data-id="'+p.id+'">'+(sd+1)+'일차에 추가</button></div>').join('')
+ let res;
+ if(KM&&q){
+  const r=KM.search(q,scat);
+  if(!r||r.err){$('#sres').innerHTML='<div class="empty"><p class="sub">'+(r?'카카오 장소 검색에 실패했어요. 잠시 후 다시 시도해 주세요.':'검색 중이에요…')+'</p></div>';return;}
+  res=r.list;
+ }else res=DB.filter(p=>(!KM||p.lat!=null)&&(scat==='전체'||p.c===scat)&&(!q||p.n.indexOf(q)>-1||p.c.indexOf(q)>-1)).slice(0,40);
+ $('#sres').innerHTML=res.length?res.map(p=>'<div class="sr"><div><div class="nm" style="font-size:14px">'+p.n+'<span class="cat">'+p.c+'</span></div><div class="sub">'+[p.r!=null?'<span class="star">★</span> '+p.r.toFixed(1)+' ('+p.v+')':'',p.a||'',inTrip[p.id]?inTrip[p.id].join(', ')+'일차 포함':''].filter(Boolean).join(' · ')+'</div></div><button class="chip" data-id="'+p.id+'">'+(sd+1)+'일차에 추가</button></div>').join('')
   :'<div class="empty"><p class="nm">검색 결과가 없어요</p><p class="sub">다른 이름이나 종류로 찾아보세요.</p></div>';
 }
 $('#open-s').addEventListener('click',openSearch);
