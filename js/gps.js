@@ -48,8 +48,8 @@ function startGPS(){
  if(!navigator.geolocation){gmsg='이 기기에서는 위치를 쓸 수 없어요.';renderG();return;}
  gmsg='위치를 확인하는 중이에요…';renderG();firstFix=true;
  watch=navigator.geolocation.watchPosition(pos=>{
-  const q=llToXY(pos.coords.latitude,pos.coords.longitude);
-  if(q.x<-2||q.x>92||q.y<-2||q.y>44){stopAll();gmsg='현재 위치가 이 예시 지도(제주) 밖이에요.';renderG();return;}
+  const la=pos.coords.latitude,lo=pos.coords.longitude,q=KM?proj(la,lo):llToXY(la,lo);
+  if(!KM&&(q.x<-2||q.x>92||q.y<-2||q.y>44)){stopAll();gmsg='현재 위치가 이 예시 지도(제주) 밖이에요.';renderG();return;}
   me={x:q.x,y:q.y,src:'gps'};gmsg='';
   const old=pg?pg.passed:-1;pg=prog();renderG();if(pg&&pg.passed!==old)renderList();
   if(firstFix){firstFix=false;fitTo(dayPts(sd).concat([me]));}else drawMap();

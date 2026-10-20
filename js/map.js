@@ -1,17 +1,18 @@
 /* ---------- 지도 ---------- */
 const map=$('#map'),sheet=$('#sheet'),list=$('#list');
-let W=0,H=0,sheetH=420,V={cx:45,cy:20,s:4},T={cx:45,cy:20,s:4},raf=0;
+let KM=null,W=0,H=0,sheetH=420,V={cx:45,cy:20,s:4},T={cx:45,cy:20,s:4},raf=0;
 const ISL=[],RING=[];
 for(let a=0;a<6.2832;a+=.12){const r=1+.03*Math.sin(3*a+1)+.025*Math.sin(5*a+2);
  ISL.push([45+41*r*Math.cos(a),20.5+18.5*r*Math.sin(a)]);
  RING.push([45+41*.86*Math.cos(a),20.5+18.5*.8*Math.sin(a)]);}
 const CROSS=[[6,24],[20,20],[45,19],[70,19],[84,18]];
-const size=()=>{W=map.clientWidth;H=map.clientHeight;};
+const size=()=>{const a=map.parentNode;W=a.clientWidth;H=a.clientHeight;};
 const vb=()=>{const top=64,bot=Math.max(H-sheetH,top+140);return[top,bot];};
 const pr=(x,y)=>{const b=vb();return[(x-V.cx)*V.s+W/2,(y-V.cy)*V.s+(b[0]+b[1])/2];};
 const path=(pts,closed)=>pts.map((p,i)=>{const q=pr(p[0],p[1]);return(i?'L':'M')+q[0].toFixed(1)+' '+q[1].toFixed(1);}).join('')+(closed?'Z':'');
 
 function drawMap(){
+ if(KM)return KM.draw();
  size();if(!W||!H)return;
  let o='<rect class="sea" width="'+W+'" height="'+H+'"/>';
  o+='<path class="land" d="'+path(ISL,true)+'"/>';
@@ -73,6 +74,7 @@ function go(){
  };step();
 }
 function fitTo(pts,extra){
+ if(KM)return KM.fit(pts,extra);
  size();extra=extra||0;const b=vb(),vh=b[1]-b[0]-56,vw=W-56;
  if(!pts.length){T={cx:45,cy:20.5,s:Math.max(2.5,Math.min(vw/90,vh/42))};}
  else{
@@ -106,14 +108,16 @@ map.addEventListener('pointerup',e=>{
  if(moved>6)return;
  const el=document.elementFromPoint(e.clientX,e.clientY),g=el&&el.closest('[data-i],[data-nid]');
  if(!g)return;
- if(g.dataset.nid){nb.hi=g.dataset.nid;renderList();drawMap();const row=list.querySelector('[data-id="'+nb.hi+'"]');if(row)row.scrollIntoView({block:'nearest'});return;}
- const di=+g.dataset.day,i=+g.dataset.i;
- if(di!==sd){sd=di;sel=i;nb.hi=null;}else sel=sel===i?null:i;
- afterSel();
+ if(g.dataset.nid)pickNb(g.dataset.nid);else pickStop(+g.dataset.day,+g.dataset.i);
 });
 map.addEventListener('pointercancel',e=>ptrs.delete(e.pointerId));
 map.addEventListener('wheel',e=>{e.preventDefault();V.s=Math.max(2.5,Math.min(160,V.s*(e.deltaY<0?1.15:.87)));T={cx:V.cx,cy:V.cy,s:V.s};drawMap();},{passive:false});
 
+function pickNb(id){nb.hi=id;renderList();drawMap();const row=list.querySelector('[data-id="'+id+'"]');if(row)row.scrollIntoView({block:'nearest'});}
+function pickStop(di,i){
+ if(di!==sd){sd=di;sel=i;nb.hi=null;}else sel=sel===i?null:i;
+ afterSel();
+}
 function afterSel(){
  if(sel!=null&&sheetH<220)setSheet(snaps()[1],true);else refit();
  renderAll(true);
