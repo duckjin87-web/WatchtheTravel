@@ -1,5 +1,5 @@
 /* ---------- 카카오맵 어댑터 (CONFIG.USE_MOCK=false) ----------
-   지도, 경로선, 마커, 반경 원을 카카오맵으로 그리고 장소 검색·근처 맛집/카페를 카카오 로컬(services)로 가져온다.
+   지도, 경로선, 마커, 반경 원을 카카오맵으로 그리고 장소 검색·근처 음식점·카페·숙소를 카카오 로컬(services)로 가져온다.
    일정 계산과 GPS는 그대로 km 평면 좌표(x,y)를 쓰고, 그릴 때만 위경도로 바꾼다 (core.js proj/unproj). */
 function loadKakao(){
  return new Promise((ok,no)=>{
@@ -28,8 +28,8 @@ function kakaoMap(){
 
  function reg(d){
   const id='k'+d.id;if(P[id])return P[id];
-  const g=d.category_group_code,lat=+d.y,lng=+d.x;
-  const p=Object.assign({id,n:clean(d.place_name),c:g==='FD6'?'맛집':g==='CE7'?'카페':'명소',lat,lng,
+  const lat=+d.y,lng=+d.x;
+  const p=Object.assign({id,n:clean(d.place_name),c:catOf(d.category_group_code,d.category_name),lat,lng,
    a:clean(d.road_address_name||d.address_name),r:null,v:null,src:'카카오',url:d.place_url},proj(lat,lng));
   DB.push(p);P[id]=p;return p;
  }
@@ -44,35 +44,16 @@ function kakaoMap(){
  function draw(){if(!q)q=requestAnimationFrame(render);}
  function render(){
   q=0;ov.forEach(o=>o.setMap(null));ov=[];
-  const order=trip.days.map((_,i)=>i).filter(i=>i!==sd).concat([sd]);
-  order.forEach(di=>{
-   const pts=dayPts(di);if(pts.length<2)return;const on=di===sd;
-   line(pts,{strokeWeight:on?8:6,strokeColor:'#fff',strokeOpacity:on?.9:.5,zIndex:on?2:1});
-   line(pts,{strokeWeight:on?4.5:3,strokeColor:COL[di%5],strokeOpacity:on?1:.4,zIndex:on?2:1});
+  const sc=scene(),pj=km.getProjection();
+  sc.lines.forEach(l=>{
+   if(l.halo)line(l.pts,{strokeWeight:l.w+3.5,strokeColor:'#fff',strokeOpacity:l.op===1?.9:.5,zIndex:l.z});
+   line(l.pts,{strokeWeight:l.w,strokeColor:l.c,strokeOpacity:l.op,strokeStyle:l.dash?'shortdash':'solid',zIndex:l.z});
   });
-  if(sel!=null&&trip.days[sd].items[sel]){
-   put(new K.Circle({center:pos(curP()),radius:nb.r*1000,strokeWeight:1.2,strokeColor:'#14181D',strokeOpacity:.8,strokeStyle:'dash',fillColor:'#14181D',fillOpacity:.05}));
-   nearby().forEach(e=>pin(e.p,'<div class="kn'+(e.p.c==='카페'?' cafe':'')+(nb.hi===e.p.id?' on':'')+'" title="'+e.p.n+'"></div>',3,()=>pickNb(e.p.id)));
-  }
-  order.forEach(di=>{
-   const c=COL[di%5],on=di===sd;
-   trip.days[di].items.forEach((it,i)=>{
-    const p=P[it.id];
-    if(on)pin(p,'<div class="ks'+(sel===i?' open':'')+(pg&&i<pg.passed?' done':'')+'" style="background:'+c+'">'+(i+1)+'<b>'+p.n+'</b></div>',5,()=>pickStop(di,i));
-    else pin(p,'<div class="kd" style="background:'+c+'"></div>',2,()=>pickStop(di,i));
-   });
+  if(sc.circle)put(new K.Circle({center:pos(sc.circle.p),radius:sc.circle.r*1000,strokeWeight:1.2,strokeColor:'#14181D',strokeOpacity:.8,strokeStyle:'dash',fillColor:'#14181D',fillOpacity:.05}));
+  sc.marks.forEach(m=>{
+   if(m.need){const A=pj.containerPointFromCoords(pos(m.need[0])),B=pj.containerPointFromCoords(pos(m.need[1]));if(Math.hypot(A.x-B.x,A.y-B.y)<56)return;}
+   pin(m.p,m.h,m.z,m.click);
   });
-  const rows=sched(sd),pj=km.getProjection();
-  rows.forEach((r,i)=>{
-   if(i>=rows.length-1)return;
-   const b=rows[i+1].p,A=pj.containerPointFromCoords(pos(r.p)),B=pj.containerPointFromCoords(pos(b));
-   if(Math.hypot(A.x-B.x,A.y-B.y)<56)return;
-   pin({x:(r.p.x+b.x)/2,y:(r.p.y+b.y)/2},'<div class="kc" style="border-color:'+COL[sd%5]+'">'+r.dm+'분</div>',4);
-  });
-  if(me){
-   if(pg&&pg.d>1.5)line([me,{x:pg.px,y:pg.py}],{strokeWeight:2,strokeColor:'#D6452B',strokeStyle:'dash',zIndex:6});
-   pin(me,'<div class="kme"></div>',7);
-  }
  }
  K.event.addListener(km,'idle',draw);
 
@@ -86,13 +67,13 @@ function kakaoMap(){
   km.setBounds(b,72,28,sheetH+24,28);
  }
 
- /* ---- 근처 맛집(FD6)·카페(CE7): 장소+반경별로 캐시 ---- */
+ /* ---- 근처 음식점(FD6)·카페(CE7)·숙소(AD5): 장소+반경별로 캐시 ---- */
  const nc={};
  function near(a){
   const k=a.id+'|'+nb.r;
   if(!nc[k]){
-   const e=nc[k]={busy:true,err:false,list:[]};let n=2;
-   ['FD6','CE7'].forEach(code=>ps.categorySearch(code,(d,st)=>{
+   const e=nc[k]={busy:true,err:false,list:[]};let n=3;
+   ['FD6','CE7','AD5'].forEach(code=>ps.categorySearch(code,(d,st)=>{
     if(st===OK)d.forEach(x=>e.list.push(reg(x)));else if(st===ERR)e.err=true;
     if(--n===0){e.busy=false;renderList();draw();}
    },{location:pos(a),radius:Math.min(20000,nb.r*1000),sort:K.services.SortBy.DISTANCE}));
@@ -101,7 +82,7 @@ function kakaoMap(){
  }
 
  /* ---- 키워드 검색: 입력이 멈추면 호출, 검색어+분류별 캐시 ---- */
- const sc={},CAT={'명소':'AT4','맛집':'FD6','카페':'CE7'};let st=0,pk=null;
+ const sc={},CAT={'명소':'AT4','음식점':'FD6','카페':'CE7','숙소':'AD5'};let st=0,pk=null;
  function search(qs,cat){
   const k=qs+'|'+cat,c=sc[k];if(c)return c.busy?null:c;
   if(pk)delete sc[pk];clearTimeout(st);
