@@ -50,7 +50,7 @@ function renderHome(){
 function openHome(){stopAll();renderG();hmenu=null;hdel=null;htab=tripState(trip).past&&TRIPS.indexOf(trip)>-1?'past':'now';home.classList.add('on');renderHome();}
 function closeHome(){home.classList.remove('on');}
 function openTrip(t){
- stopAll();gmsg='';trip=t;sd=0;all=false;sel=null;ahi=null;nb.hi=null;dpend=-1;
+ stopAll();gmsg='';trip=t;sd=0;all=false;pool=false;ord=null;phi=null;sel=null;ahi=null;nb.hi=null;dpend=-1;
  $('#title').value=t.title;$('#dstart').value=t.start;
  closeHome();refit();renderAll();
 }
@@ -70,7 +70,7 @@ home.addEventListener('click',e=>{
  if(d.copy){openNew(tripById(d.copy));return;}
  if(b.id==='trip-new')openNew(null);
 });
-$('#home-open').addEventListener('click',()=>{saveTrip();openHome();});
+$('#home-open').addEventListener('click',()=>{if(prev){toast('미리보기를 적용하거나 취소해 주세요');return;}ord=null;saveTrip();openHome();});
 
 /* ---------- 새 여행 ---------- */
 const nf=$('#newtrip');
@@ -113,7 +113,7 @@ nf.addEventListener('click',e=>{
  if(b.id==='nt-go'){
   const n=dayDiff(nt.a,nt.b||nt.a)+1,src=nt.src;
   const days=Array.from({length:n},(_,i)=>src&&src.days[i]?JSON.parse(JSON.stringify(src.days[i])):{start:'09:00',items:[]});
-  const t={id:'t'+Date.now().toString(36),title:clean(nt.name.trim()),start:nt.a,days};
+  const t={id:'t'+Date.now().toString(36),title:clean(nt.name.trim()),start:nt.a,pool:src?src.pool.slice():[],days};
   TRIPS.push(t);closeNew();openTrip(t);toast('"'+t.title+'"을 만들었어요');
  }
 });

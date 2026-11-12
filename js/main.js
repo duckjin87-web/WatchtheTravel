@@ -1,5 +1,6 @@
 /* ---------- 시작 ---------- */
 function init(){
+ $('#legend').innerHTML=CATS.map(c=>'<span>'+pinSvg(c,14,true)+c+'</span>').join('');
  size();loadTrip();
  const st=startTrip();if(st)trip=st;
  $('#title').value=trip.title;$('#dstart').value=trip.start;

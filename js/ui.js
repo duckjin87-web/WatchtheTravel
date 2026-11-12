@@ -2,8 +2,10 @@
 const sumOf=rows=>({mins:rows.reduce((a,r)=>a+r.dm,0),km:rows.reduce((a,r)=>a+r.km,0)});
 function renderTabs(){
  $('#tabs').innerHTML='<button class="tab" role="tab" aria-selected="'+all+'" data-day="all">전체</button>'
-  +trip.days.map((d,i)=>'<button class="tab" role="tab" aria-selected="'+(!all&&i===sd)+'" data-day="'+i+'"><i class="dot" style="background:'+COL[i%5]+'"></i>'+(i+1)+'일차 <span class="sub">'+dlabel(i)+'</span></button>').join('')
+  +'<button class="tab" role="tab" aria-selected="'+pool+'" data-day="pool">'+ic('pin',14)+'후보 <span class="sub">'+trip.pool.length+'</span></button>'
+  +trip.days.map((d,i)=>'<button class="tab" role="tab" aria-selected="'+(!all&&!pool&&i===sd)+'" data-day="'+i+'"><i class="dot" style="background:'+COL[i%5]+'"></i>'+(i+1)+'일차 <span class="sub">'+dlabel(i)+'</span></button>').join('')
   +'<button class="tab" data-act="newday" aria-label="날짜 추가">'+ic('plus',16)+'</button>';
+ if(pool){$('#sum').innerHTML='<span>후보 '+trip.pool.length+'곳 · 날짜를 정하지 않고 모아 둔 장소</span>';return;}
  if(all){
   const R=trip.days.map((_,i)=>sched(i)),S=sumOf(R.flat());
   $('#sum').innerHTML='<span>'+trip.days.length+'일 · '+R.reduce((a,r)=>a+r.length,0)+'곳 · 이동 '+dur(S.mins)+' · '+fmtD(S.km)+'</span>';
@@ -20,10 +22,11 @@ function driveRow(r,i,edit){
    :ic(w?'shoe':'car',16))
   +'<span>'+hm(r.dep)+' 출발 · '+(w?'도보 ':'차로 ')+dur(r.dm)+' · '+fmtD(s.km)+' · '+hm(r.dep+r.dm)+' 도착'+(KM&&s.est&&!w?' · 직선 추정':'')+'</span></div>';
 }
-const nameRow=p=>'<div class="nm"><span class="ci">'+cic(p.c,16)+'</span>'+p.n+'</div>';
+const nameRow=p=>'<div class="nm"><span class="ci" style="color:'+(CCOL[p.c]||'inherit')+'">'+cic(p.c,16)+'</span>'+p.n+'</div>';
 function renderList(){
  const st=list.scrollTop;let h='';
- if(all)h=allList();
+ if(pool)h=poolList();
+ else if(all)h=allList();
  else{
   const rows=sched(sd),c=COL[sd%5];
   if(!rows.length)h+='<div class="empty"><p class="nm">'+(sd+1)+'일차 일정이 비어 있어요</p><p class="sub">방문지를 추가하면 이동 시간이 자동으로 계산돼요.</p></div>';
@@ -92,7 +95,7 @@ function detail(i,r){
  h+='</div><p class="foot">'+(KM?'카카오 로컬 검색 결과예요. 카카오 API는 평점을 주지 않아서 평점은 아직 표시하지 않아요.':'예시 데이터예요. 카카오와 네이버 검색 결과를 합쳐 보여주고, 같은 장소는 하나로 묶어요. 네이버 검색 API는 평점을 주지 않아서 평점은 카카오 장소 상세 값만 표시해요.')+'</p></div>';
  return h;
 }
-function renderAll(){renderTabs();pg=prog();renderG();renderList();drawMap();saveTrip();}
+function renderAll(){renderTabs();pg=prog();renderG();renderList();drawMap();renderOrdbar();saveTrip();}
 
 function toast(t,undo){
  const el=$('#toast');el.textContent=t;
@@ -108,6 +111,12 @@ list.addEventListener('click',e=>{
  if(a==='go'){pickStop(+b.dataset.day,i);return;}
  if(a==='day'){all=false;sd=+b.dataset.day;sel=null;ahi=null;refit();renderAll();return;}
  if(a==='open-search'){openSearch();return;}
+ if(a==='order'){startOrder();return;}
+ if(a==='auto'){ap=ap?null:{n:Math.max(1,trip.days.length),h:hotels()[0]||'',keep:true};renderList();return;}
+ if(a==='apn'){ap.n=Math.max(1,Math.min(14,ap.n+ +v));renderList();return;}
+ if(a==='apgo'){runAuto();return;}
+ if(a==='pfocus'){phi=b.dataset.id;fitTo([P[phi]],.8);renderList();drawMap();return;}
+ if(a==='pdel'){const id=b.dataset.id,k=trip.pool.indexOf(id);trip.pool.splice(k,1);if(phi===id)phi=null;toast(P[id].n+' 후보에서 뺐어요',()=>{trip.pool.splice(k,0,id);renderAll();});renderAll();return;}
  if(a==='stay'){it.stay=Math.max(30,Math.min(720,it.stay+ +v));renderAll();return;}
  if(a==='mode'){it.mode=v;renderAll();const r=sched(sd)[i];if(v==='walk'&&r.s&&r.s.km>3)toast('걷기에는 먼 거리예요 (도보 '+dur(r.dm)+')');return;}
  if(a==='del'){
@@ -165,10 +174,15 @@ list.addEventListener('pointercancel',endDrag);
 
 $('#tabs').addEventListener('click',e=>{
  const b=e.target.closest('button');if(!b)return;
+ if(prev){toast('미리보기를 적용하거나 취소해 주세요');return;}
+ ord=null;phi=null;
+ if(b.dataset.day==='pool'){pool=true;all=false;sel=null;ahi=null;nb.hi=null;dpend=-1;refit();renderAll();return;}
+ pool=false;
  if(b.dataset.act==='newday'){trip.days.push({start:'09:00',items:[]});all=false;sd=trip.days.length-1;sel=null;toast((sd+1)+'일차를 만들었어요');refit();renderAll();return;}
  if(b.dataset.day==='all'){all=true;sel=null;ahi=null;nb.hi=null;dpend=-1;refit();renderAll();return;}
  if(b.dataset.day!=null){all=false;sd=+b.dataset.day;sel=null;ahi=null;nb.hi=null;dpend=-1;refit();renderAll();}
 });
+list.addEventListener('change',e=>{if(!ap)return;if(e.target.id==='ap-h')ap.h=e.target.value;if(e.target.id==='ap-keep')ap.keep=e.target.checked;});
 $('#sum').addEventListener('change',e=>{if(e.target.id==='stime'&&e.target.value){trip.days[sd].start=e.target.value;renderAll();}});
 $('#dstart').addEventListener('change',e=>{if(e.target.value){trip.start=e.target.value;renderAll();}});
 $('#title').addEventListener('input',saveTrip);
@@ -179,21 +193,26 @@ let spick=null;
 function openSearch(){spick=null;$('#search').classList.add('on');renderSearch();setTimeout(()=>$('#sq').focus(),50);}
 function closeSearch(){$('#search').classList.remove('on');}
 /* 날짜가 여러 개면 "추가"를 눌렀을 때 넣을 날을 고른다 */
-const picker=id=>'<div class="pick"><p class="sub">어느 날에 넣을까요?</p><div class="chips">'+trip.days.map((d,i)=>'<button class="chip" data-id="'+id+'" data-day="'+i+'"><i class="dot" style="background:'+COL[i%5]+'"></i>'+(i+1)+'일차 '+dlabel(i)+'</button>').join('')+'</div></div>';
+const picker=id=>'<div class="pick"><p class="sub">어디에 넣을까요?</p><div class="chips"><button class="chip" data-id="'+id+'" data-day="pool">'+ic('pin',14)+'후보에 담기</button>'+trip.days.map((d,i)=>'<button class="chip" data-id="'+id+'" data-day="'+i+'"><i class="dot" style="background:'+COL[i%5]+'"></i>'+(i+1)+'일차 '+dlabel(i)+'</button>').join('')+'</div></div>';
 function renderSearch(){
  $('#sc').innerHTML=['전체'].concat(CATS).map(v=>'<button class="chip" data-c="'+v+'" aria-pressed="'+(scat===v)+'">'+(v==='전체'?'':cic(v,14))+v+'</button>').join('');
  const q=sq.trim(),inTrip={};
- trip.days.forEach((d,i)=>d.items.forEach(it=>{(inTrip[it.id]=inTrip[it.id]||[]).push(i+1);}));
+ trip.days.forEach((d,i)=>d.items.forEach(it=>{(inTrip[it.id]=inTrip[it.id]||[]).push(i+1+'일차');}));
+ trip.pool.forEach(id=>{(inTrip[id]=inTrip[id]||[]).push('후보');});
  let res;
  if(KM&&q){
   const r=KM.search(q,scat);
   if(!r||r.err){$('#sres').innerHTML='<div class="empty"><p class="sub">'+(r?'카카오 장소 검색에 실패했어요. 잠시 후 다시 시도해 주세요.':'검색 중이에요…')+'</p></div>';return;}
   res=r.list;
  }else res=DB.filter(p=>(!KM||p.lat!=null)&&(scat==='전체'||p.c===scat)&&(!q||p.n.indexOf(q)>-1||p.c.indexOf(q)>-1)).slice(0,40);
- $('#sres').innerHTML=res.length?res.map(p=>'<div class="sr"><div>'+nameRow(p).replace('class="nm"','class="nm" style="font-size:14px"')+'<div class="sub">'+[p.c,p.r!=null?'<span class="star">★</span> '+p.r.toFixed(1)+' ('+p.v+')':'',p.a||'',inTrip[p.id]?inTrip[p.id].join(', ')+'일차 포함':''].filter(Boolean).join(' · ')+'</div></div><button class="chip" data-add="'+p.id+'" aria-expanded="'+(spick===p.id)+'">'+ic('plus',14)+'추가</button></div>'+(spick===p.id?picker(p.id):'')).join('')
+ $('#sres').innerHTML=res.length?res.map(p=>'<div class="sr"><div>'+nameRow(p).replace('class="nm"','class="nm" style="font-size:14px"')+'<div class="sub">'+[p.c,p.r!=null?'<span class="star">★</span> '+p.r.toFixed(1)+' ('+p.v+')':'',p.a||'',inTrip[p.id]?inTrip[p.id].join(', ')+' 포함':''].filter(Boolean).join(' · ')+'</div></div><button class="chip" data-add="'+p.id+'" aria-expanded="'+(spick===p.id)+'">'+ic('plus',14)+'추가</button></div>'+(spick===p.id?picker(p.id):'')).join('')
   :'<div class="empty"><p class="nm">검색 결과가 없어요</p><p class="sub">다른 이름이나 종류로 찾아보세요.</p></div>';
 }
 function addTo(id,di){
+ if(di==='pool'){
+  if(trip.pool.indexOf(id)<0)trip.pool.push(id);
+  pool=true;all=false;ord=null;sel=null;phi=id;spick=null;closeSearch();toast('후보에 담았어요');refit();renderAll();return;
+ }
  const items=trip.days[di].items;items.push(item(id));
  all=false;sd=di;sel=items.length-1;nb.hi=null;ahi=null;spick=null;closeSearch();toast((di+1)+'일차에 추가했어요');
  if(sheetH<220)setSheet(snaps()[1],true);else refit();
@@ -205,8 +224,8 @@ $('#sq').addEventListener('input',e=>{sq=e.target.value;spick=null;renderSearch(
 $('#sc').addEventListener('click',e=>{const b=e.target.closest('[data-c]');if(b){scat=b.dataset.c;spick=null;renderSearch();}});
 $('#sres').addEventListener('click',e=>{
  const ad=e.target.closest('[data-add]');
- if(ad){const id=ad.dataset.add;if(trip.days.length===1)addTo(id,0);else{spick=spick===id?null:id;renderSearch();}return;}
- const b=e.target.closest('[data-day]');if(b)addTo(b.dataset.id,+b.dataset.day);
+ if(ad){const id=ad.dataset.add;spick=spick===id?null:id;renderSearch();return;}
+ const b=e.target.closest('[data-day]');if(b)addTo(b.dataset.id,b.dataset.day==='pool'?'pool':+b.dataset.day);
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSearch();});
 
