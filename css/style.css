@@ -85,6 +85,7 @@ button.card.cm{padding:10px 12px;background:var(--paper);border:1px solid var(--
 .sh{display:flex;gap:8px;align-items:center}
 #sq{flex:1;height:40px;border:1px solid var(--line);border-radius:20px;padding:0 14px;background:var(--paper);font-size:14px}
 #sres{flex:1;overflow-y:auto;margin-top:6px}
+.sq-last{margin:6px 0 2px}
 .sr{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 0;border-top:1px solid var(--line)}
 #kmap{position:absolute;inset:0;z-index:0}
 #mk{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:1}
