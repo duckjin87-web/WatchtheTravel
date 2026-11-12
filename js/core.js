@@ -18,6 +18,16 @@ const dlabel=i=>{const d=new Date(trip.start+'T00:00:00');d.setDate(d.getDate()+
 /* 분류: 카카오 category_group_code 우선, 없으면 분류 이름(예: "음식점 > 카페")으로 추정 */
 const CATS=['명소','음식점','카페','숙소'],CIC={'명소':'spot','음식점':'food','카페':'cafe','숙소':'bed'};
 const cic=(c,s)=>ic(CIC[c]||'spot',s);
+/* 지도 표시: 분류마다 모양과 색이 다르다 (명소 원, 음식점 둥근 사각형, 카페 마름모, 숙소 집 모양).
+   일차는 경로선 색과 마커의 번호 배지 색으로 구분한다 */
+const CCOL={'명소':'#2563EB','음식점':'#E11D48','카페':'#9A5B2B','숙소':'#0F766E'};
+const SHAPE={'명소':'<circle cx="15" cy="15" r="12.5"/>','음식점':'<rect x="3" y="3" width="24" height="24" rx="6"/>','카페':'<path d="M15 1.5L28.5 15L15 28.5L1.5 15Z"/>','숙소':'<path d="M15 2L28.5 13.5V28H1.5V13.5Z"/>'};
+/* solid: 분류색으로 채움(일정 방문지) / 아니면 흰 바탕에 분류색 선(근처 장소) */
+function pinSvg(c,size,solid){
+ c=CCOL[c]?c:'명소';const col=CCOL[c],fg=solid?'#fff':col;
+ return '<svg class="pin" width="'+size+'" height="'+size+'" viewBox="0 0 30 30" aria-hidden="true"><g fill="'+(solid?col:'#fff')+'" stroke="'+(solid?'#fff':col)+'" stroke-width="2.2" stroke-linejoin="round">'+SHAPE[c]+'</g>'
+  +'<svg x="8" y="8" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="'+fg+'" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><use href="#i-'+CIC[c]+'"/></svg></svg>';
+}
 function catOf(code,name){
  if(code==='AD5')return'숙소';if(code==='CE7')return'카페';if(code==='FD6')return'음식점';
  name=name||'';
@@ -66,7 +76,7 @@ function scene(){
  });
  if(!all&&sel!=null&&trip.days[sd].items[sel]){
   circle={p:curP(),r:nb.r};
-  nearby().forEach(e=>marks.push({p:e.p,z:3,h:'<div class="kn'+(nb.hi===e.p.id?' on':'')+'" title="'+e.p.n+'">'+cic(e.p.c,12)+'</div>',click:()=>pickNb(e.p.id)}));
+  nearby().forEach(e=>marks.push({p:e.p,z:3,h:'<div class="kn'+(nb.hi===e.p.id?' on':'')+'" title="'+e.p.n+'">'+pinSvg(e.p.c,24,nb.hi===e.p.id)+'</div>',click:()=>pickNb(e.p.id)}));
  }
  if(!all){
   const c=COL[sd%5];
@@ -74,15 +84,15 @@ function scene(){
    const a=P[it.id],b=P[id];
    lines.push({pts:[a,b],c,w:2,op:.9,dash:true,z:3});
    marks.push({p:{x:(a.x+b.x)/2,y:(a.y+b.y)/2},z:4,need:[a,b],h:'<div class="kc alt">'+fmtD(dist(a,b))+'</div>'});
-   marks.push({p:b,z:4,h:'<div class="kalt'+(ahi===id?' on':'')+'" style="border-color:'+c+'">'+cic(b.c,12)+'<b>'+b.n+'</b></div>',click:()=>pickAlt(i,id)});
+   marks.push({p:b,z:4,h:'<div class="kalt'+(ahi===id?' on':'')+'" style="border-color:'+c+'">'+pinSvg(b.c,18,true)+'<b>'+b.n+'</b></div>',click:()=>pickAlt(i,id)});
   }));
  }
  order.forEach(di=>{
   const c=COL[di%5],on=all||di===sd;
   trip.days[di].items.forEach((it,i)=>{
    const p=P[it.id];
-   if(on)marks.push({p,z:5,h:'<div class="ks'+(!all&&sel===i?' open':'')+(!all&&pg&&i<pg.passed?' done':'')+'" style="background:'+c+'">'+(i+1)+'<b>'+cic(p.c,12)+p.n+'</b></div>',click:()=>pickStop(di,i)});
-   else marks.push({p,z:2,h:'<div class="kd" style="background:'+c+'"></div>',click:()=>pickStop(di,i)});
+   if(on)marks.push({p,z:5,h:'<div class="ks'+(!all&&sel===i?' open':'')+(!all&&pg&&i<pg.passed?' done':'')+'">'+pinSvg(p.c,30,true)+'<span class="no" style="background:'+c+'">'+(i+1)+'</span><b>'+p.n+'</b></div>',click:()=>pickStop(di,i)});
+   else marks.push({p,z:2,h:'<div class="kd">'+pinSvg(p.c,18,true)+'</div>',click:()=>pickStop(di,i)});
   });
  });
  if(!all){

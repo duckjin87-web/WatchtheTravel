@@ -20,7 +20,7 @@ function driveRow(r,i,edit){
    :ic(w?'shoe':'car',16))
   +'<span>'+hm(r.dep)+' 출발 · '+(w?'도보 ':'차로 ')+dur(r.dm)+' · '+fmtD(s.km)+' · '+hm(r.dep+r.dm)+' 도착'+(KM&&s.est&&!w?' · 직선 추정':'')+'</span></div>';
 }
-const nameRow=p=>'<div class="nm"><span class="ci">'+cic(p.c,16)+'</span>'+p.n+'</div>';
+const nameRow=p=>'<div class="nm"><span class="ci" style="color:'+(CCOL[p.c]||'inherit')+'">'+cic(p.c,16)+'</span>'+p.n+'</div>';
 function renderList(){
  const st=list.scrollTop;let h='';
  if(all)h=allList();

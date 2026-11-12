@@ -90,19 +90,23 @@ button.card.cm{padding:10px 12px;background:var(--paper);border:1px solid var(--
 #mk{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:1}
 .mk{position:absolute;transform:translate(-50%,-50%);pointer-events:auto}
 /* 카카오맵 오버레이 (지도 타일이 항상 밝아서 고정 색을 쓴다) */
-.ks{position:relative;width:24px;height:24px;border-radius:50%;border:2px solid #fff;color:#fff;font-size:12px;font-weight:500;display:grid;place-items:center;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.3)}
-.ks b{display:flex;align-items:center;gap:3px;position:absolute;left:28px;top:50%;transform:translateY(-50%);white-space:nowrap;color:#14181D;font-size:12px;font-weight:500;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 3px #fff}
-.ks.open{outline:2px solid #14181D;outline-offset:3px}.ks.done{opacity:.5}
-.kd{width:12px;height:12px;border-radius:50%;border:1.5px solid #fff;opacity:.7;cursor:pointer}
-.kn{width:22px;height:22px;border-radius:50%;background:#fff;border:1.5px solid #14181D;color:#14181D;display:grid;place-items:center;cursor:pointer}.kn.on{background:#14181D;color:#fff}
+.pin{display:block}
+.ks{position:relative;width:30px;height:30px;cursor:pointer;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))}
+.ks .no{position:absolute;right:-8px;top:-8px;min-width:18px;height:18px;padding:0 4px;border-radius:9px;border:2px solid #fff;color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center;font-variant-numeric:tabular-nums}
+.ks b{position:absolute;left:36px;top:50%;transform:translateY(-50%);white-space:nowrap;color:#14181D;font-size:12px;font-weight:500;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 3px #fff}
+.ks.open::before{content:'';position:absolute;inset:-6px;border:2px solid #14181D;border-radius:50%}.ks.done{opacity:.5}
+.kd{opacity:.65;cursor:pointer;filter:drop-shadow(0 1px 1px rgba(0,0,0,.3))}
+.kn{cursor:pointer;filter:drop-shadow(0 1px 2px rgba(0,0,0,.3))}.kn.on{transform:scale(1.15)}
+#legend{position:absolute;left:12px;top:60px;z-index:3;display:flex;gap:8px;background:rgba(255,255,255,.88);border-radius:12px;padding:3px 9px;font-size:11px;color:#14181D;pointer-events:none}
+#legend span{display:flex;align-items:center;gap:3px}
 .kshoe{width:20px;height:20px;border-radius:50%;background:#fff;border:1.5px solid currentColor;display:grid;place-items:center;pointer-events:none}
-.kalt{display:flex;align-items:center;gap:4px;background:#fff;border:1.5px dashed;border-radius:12px;padding:2px 8px 2px 6px;font-size:12px;color:#14181D;white-space:nowrap;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.kalt{display:flex;align-items:center;gap:4px;background:#fff;border:1.5px dashed;border-radius:12px;padding:2px 8px 2px 3px;font-size:12px;color:#14181D;white-space:nowrap;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.2)}
 .kalt b{font-weight:500}.kalt.on{background:#14181D;color:#fff}
 .kc{display:flex;align-items:center;gap:3px;background:#fff;border:1.2px solid;border-radius:10px;padding:0 8px;line-height:18px;font-size:12px;font-weight:500;color:#14181D;pointer-events:none}
 .kc.alt{border-style:dashed;border-color:#8B95A1;color:#5B6571;font-weight:400}
 .kme{width:16px;height:16px;border-radius:50%;background:#2F7FC1;border:3px solid #fff;box-shadow:0 0 0 12px rgba(47,127,193,.15);pointer-events:none}
 a.chip{text-decoration:none;color:inherit}
-#toast{position:absolute;left:50%;top:60px;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:8px 14px;border-radius:18px;font-size:13px;z-index:7;opacity:0;pointer-events:none;transition:opacity .2s;max-width:calc(100% - 32px);width:max-content;text-align:center}
+#toast{position:absolute;left:50%;top:94px;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:8px 14px;border-radius:18px;font-size:13px;z-index:7;opacity:0;pointer-events:none;transition:opacity .2s;max-width:calc(100% - 32px);width:max-content;text-align:center}
 #toast.act.on{pointer-events:auto}
 /* 여행 목록 / 새 여행 */
 #home,#newtrip{position:absolute;inset:0;background:var(--bg);z-index:5;display:none;flex-direction:column;overflow-y:auto}
