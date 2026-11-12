@@ -189,29 +189,34 @@ $('#title').addEventListener('input',saveTrip);
 $('#refit').addEventListener('click',()=>{sel=null;nb.hi=null;ahi=null;refit();renderAll();});
 
 /* ---------- 검색 ---------- */
-let spick=null;
+/* lastQ: 후보에 담은 뒤 검색칸은 비우고, 직전 검색 결과는 새로 입력할 때까지 보여준다 */
+let spick=null,lastQ='';
 function openSearch(){spick=null;$('#search').classList.add('on');renderSearch();setTimeout(()=>$('#sq').focus(),50);}
-function closeSearch(){$('#search').classList.remove('on');}
+function closeSearch(){$('#search').classList.remove('on');sq='';lastQ='';$('#sq').value='';}
 /* 날짜가 여러 개면 "추가"를 눌렀을 때 넣을 날을 고른다 */
 const picker=id=>'<div class="pick"><p class="sub">어디에 넣을까요?</p><div class="chips"><button class="chip" data-id="'+id+'" data-day="pool">'+ic('pin',14)+'후보에 담기</button>'+trip.days.map((d,i)=>'<button class="chip" data-id="'+id+'" data-day="'+i+'"><i class="dot" style="background:'+COL[i%5]+'"></i>'+(i+1)+'일차 '+dlabel(i)+'</button>').join('')+'</div></div>';
 function renderSearch(){
  $('#sc').innerHTML=['전체'].concat(CATS).map(v=>'<button class="chip" data-c="'+v+'" aria-pressed="'+(scat===v)+'">'+(v==='전체'?'':cic(v,14))+v+'</button>').join('');
- const q=sq.trim(),inTrip={};
+ const q=sq.trim()||lastQ,inTrip={},note=!sq.trim()&&lastQ?'<p class="sub sq-last">"'+clean(lastQ)+'" 검색 결과 · 새 장소는 위 검색칸에 입력하세요</p>':'';
  trip.days.forEach((d,i)=>d.items.forEach(it=>{(inTrip[it.id]=inTrip[it.id]||[]).push(i+1+'일차');}));
  trip.pool.forEach(id=>{(inTrip[id]=inTrip[id]||[]).push('후보');});
  let res;
  if(KM&&q){
   const r=KM.search(q,scat);
-  if(!r||r.err){$('#sres').innerHTML='<div class="empty"><p class="sub">'+(r?'카카오 장소 검색에 실패했어요. 잠시 후 다시 시도해 주세요.':'검색 중이에요…')+'</p></div>';return;}
+  if(!r||r.err){$('#sres').innerHTML=note+'<div class="empty"><p class="sub">'+(r?'카카오 장소 검색에 실패했어요. 잠시 후 다시 시도해 주세요.':'검색 중이에요…')+'</p></div>';return;}
   res=r.list;
  }else res=DB.filter(p=>(!KM||p.lat!=null)&&(scat==='전체'||p.c===scat)&&(!q||p.n.indexOf(q)>-1||p.c.indexOf(q)>-1)).slice(0,40);
- $('#sres').innerHTML=res.length?res.map(p=>'<div class="sr"><div>'+nameRow(p).replace('class="nm"','class="nm" style="font-size:14px"')+'<div class="sub">'+[p.c,p.r!=null?'<span class="star">★</span> '+p.r.toFixed(1)+' ('+p.v+')':'',p.a||'',inTrip[p.id]?inTrip[p.id].join(', ')+' 포함':''].filter(Boolean).join(' · ')+'</div></div><button class="chip" data-add="'+p.id+'" aria-expanded="'+(spick===p.id)+'">'+ic('plus',14)+'추가</button></div>'+(spick===p.id?picker(p.id):'')).join('')
-  :'<div class="empty"><p class="nm">검색 결과가 없어요</p><p class="sub">다른 이름이나 종류로 찾아보세요.</p></div>';
+ $('#sres').innerHTML=note+(res.length?res.map(p=>'<div class="sr"><div>'+nameRow(p).replace('class="nm"','class="nm" style="font-size:14px"')+'<div class="sub">'+[p.c,p.r!=null?'<span class="star">★</span> '+p.r.toFixed(1)+' ('+p.v+')':'',p.a||'',inTrip[p.id]?inTrip[p.id].join(', ')+' 포함':''].filter(Boolean).join(' · ')+'</div></div><button class="chip" data-add="'+p.id+'" aria-expanded="'+(spick===p.id)+'">'+ic('plus',14)+'추가</button></div>'+(spick===p.id?picker(p.id):'')).join('')
+  :'<div class="empty"><p class="nm">검색 결과가 없어요</p><p class="sub">다른 이름이나 종류로 찾아보세요.</p></div>');
 }
 function addTo(id,di){
  if(di==='pool'){
-  if(trip.pool.indexOf(id)<0)trip.pool.push(id);
-  pool=true;all=false;ord=null;sel=null;phi=id;spick=null;closeSearch();toast('후보에 담았어요');refit();renderAll();return;
+  /* 검색창은 열어 둔 채 계속 담을 수 있게 한다 */
+  const had=trip.pool.indexOf(id)>-1;if(!had)trip.pool.push(id);
+  lastQ=sq.trim()||lastQ;sq='';$('#sq').value='';spick=null;
+  pool=true;all=false;ord=null;sel=null;phi=id;
+  toast(had?'이미 후보에 있어요':P[id].n+' 후보에 담았어요 · 후보 '+trip.pool.length+'곳');
+  refit();renderAll();renderSearch();return;
  }
  const items=trip.days[di].items;items.push(item(id));
  all=false;sd=di;sel=items.length-1;nb.hi=null;ahi=null;spick=null;closeSearch();toast((di+1)+'일차에 추가했어요');
@@ -220,7 +225,7 @@ function addTo(id,di){
 }
 $('#open-s').addEventListener('click',openSearch);
 $('#sclose').addEventListener('click',closeSearch);
-$('#sq').addEventListener('input',e=>{sq=e.target.value;spick=null;renderSearch();});
+$('#sq').addEventListener('input',e=>{sq=e.target.value;lastQ='';spick=null;renderSearch();});
 $('#sc').addEventListener('click',e=>{const b=e.target.closest('[data-c]');if(b){scat=b.dataset.c;spick=null;renderSearch();}});
 $('#sres').addEventListener('click',e=>{
  const ad=e.target.closest('[data-add]');
