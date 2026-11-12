@@ -48,27 +48,29 @@ const item=id=>({id,stay:defStay(P[id]),mode:'car',alts:[]});
 const mk=ids=>ids.map(item);
 
 /* 여행: TRIPS 에 모두 두고, 지금 열린 여행이 trip 이다 */
-let trip={id:'t1',title:'제주 가을 여행',start:'2026-10-24',days:[
+let trip={id:'t1',title:'제주 가을 여행',start:'2026-10-24',pool:[],days:[
  {start:'09:00',items:mk([S.air,S.ham,S.man,S.sung,S.sup])},
  {start:'09:30',items:mk([S.hyup,S.osul,S.jung,S.chun])},
  {start:'10:00',items:mk([S.yong,S.dong,S.arbo,S.air])}
 ]};
 let TRIPS=[trip],LAST={cur:'t1',at:0};
+/* pool: 후보 탭 보는 중 / ord: 지도에서 순서 정하는 중 / prev: 자동 정리 미리보기 중 / phi: 강조한 후보 */
+let pool=false,ord=null,prev=null,phi=null;
 let sd=0,all=false,ahi=null,sel=null,nb={r:3,t:'전체',s:'전체',min:0,hi:null},sq='',scat='전체',pg=null,me=null,dpend=-1,gmsg='';
 
 /* 저장: 바뀔 때마다 이 브라우저(localStorage)에 모든 여행을 저장한다. 계정·여러 기기 저장은 예정
    예전 한 여행짜리 저장(wt.trip.v1)은 처음 열 때 첫 여행으로 옮긴다 */
 const TKEY='wt.trips.v1',SKEY='wt.trip.v1';
 function saveTrip(){
+ if(prev)return;
  try{
   if(TRIPS.indexOf(trip)>-1)trip.title=clean($('#title').value.trim())||'이름 없는 여행';
   /* 목록 화면에 있는 동안은 "마지막에 본 시각"을 바꾸지 않는다 */
   if(!$('#home').classList.contains('on'))LAST={cur:trip.id,at:Date.now()};
   const places={};
-  TRIPS.forEach(t=>t.days.forEach(d=>d.items.forEach(it=>[it.id].concat(it.alts).forEach(id=>{
-   const p=P[id];if(p&&!places[id])places[id]={id,n:p.n,c:p.c,lat:p.lat,lng:p.lng,a:p.a,url:p.url,src:p.src};
-  }))));
-  localStorage.setItem(TKEY,JSON.stringify({cur:LAST.cur,at:LAST.at,trips:TRIPS.map(t=>({id:t.id,title:t.title,start:t.start,arch:t.arch,days:t.days})),places}));
+  const keep=id=>{const p=P[id];if(p&&!places[id])places[id]={id,n:p.n,c:p.c,lat:p.lat,lng:p.lng,a:p.a,url:p.url,src:p.src};};
+  TRIPS.forEach(t=>{t.pool.forEach(keep);t.days.forEach(d=>d.items.forEach(it=>[it.id].concat(it.alts).forEach(keep)));});
+  localStorage.setItem(TKEY,JSON.stringify({cur:LAST.cur,at:LAST.at,trips:TRIPS.map(t=>({id:t.id,title:t.title,start:t.start,arch:t.arch,pool:t.pool,days:t.days})),places}));
  }catch(e){}
 }
 function loadTrip(){
@@ -84,7 +86,7 @@ function loadTrip(){
   const p=Object.assign({r:null,v:null,src:'카카오'},q,KM?proj(q.lat,q.lng):llToXY(q.lat,q.lng));DB.push(p);P[p.id]=p;
  });
  const ok=id=>P[id]&&(!KM||P[id].lat!=null);
- TRIPS=s.trips.filter(t=>t&&Array.isArray(t.days)&&t.days.length).map(t=>({id:String(t.id),title:t.title||'이름 없는 여행',start:t.start||trip.start,arch:typeof t.arch==='boolean'?t.arch:undefined,
+ TRIPS=s.trips.filter(t=>t&&Array.isArray(t.days)&&t.days.length).map(t=>({id:String(t.id),title:t.title||'이름 없는 여행',start:t.start||trip.start,arch:typeof t.arch==='boolean'?t.arch:undefined,pool:(t.pool||[]).filter(ok),
   days:t.days.map(d=>({start:d.start||'09:00',items:(d.items||[]).filter(it=>ok(it.id)).map(it=>({id:it.id,stay:it.stay||60,mode:it.mode==='walk'?'walk':'car',alts:(it.alts||[]).filter(ok)}))}))}));
  LAST={cur:s.cur,at:s.at||0};
  trip=TRIPS.find(t=>t.id===s.cur)||TRIPS[0]||trip;

@@ -65,20 +65,20 @@ function nearby(){
    lines: {pts,c,w,op,halo,dash,z} / marks: {p,h(HTML),z,click,need:[a,b] 화면에서 56px 이상 떨어질 때만} / circle: {p,r(km)} */
 function scene(){
  const lines=[],marks=[];let circle=null;
- const order=trip.days.map((_,i)=>i).filter(i=>all||i!==sd);if(!all)order.push(sd);
+ const dv=!all&&!pool,order=trip.days.map((_,i)=>i).filter(i=>!dv||i!==sd);if(dv)order.push(sd);
  order.forEach(di=>{
-  const on=all||di===sd,c=COL[di%5];
+  const on=all||(dv&&di===sd),c=COL[di%5];
   sched(di).forEach(r=>{
    if(!r.s)return;
    lines.push({pts:r.s.path,c,w:on?4.5:3,op:on?1:.4,halo:true,z:on?2:1});
    if(r.s.walk&&on)[.25,.75].forEach(f=>marks.push({p:along(r.s.path,f),z:3,h:'<div class="kshoe" style="color:'+c+'">'+ic('shoe',13)+'</div>'}));
   });
  });
- if(!all&&sel!=null&&trip.days[sd].items[sel]){
+ if(dv&&sel!=null&&trip.days[sd].items[sel]){
   circle={p:curP(),r:nb.r};
   nearby().forEach(e=>marks.push({p:e.p,z:3,h:'<div class="kn'+(nb.hi===e.p.id?' on':'')+'" title="'+e.p.n+'">'+pinSvg(e.p.c,24,nb.hi===e.p.id)+'</div>',click:()=>pickNb(e.p.id)}));
  }
- if(!all){
+ if(dv){
   const c=COL[sd%5];
   trip.days[sd].items.forEach((it,i)=>(it.alts||[]).forEach(id=>{
    const a=P[it.id],b=P[id];
@@ -88,14 +88,15 @@ function scene(){
   }));
  }
  order.forEach(di=>{
-  const c=COL[di%5],on=all||di===sd;
+  const c=COL[di%5],on=all||(dv&&di===sd);
   trip.days[di].items.forEach((it,i)=>{
    const p=P[it.id];
    if(on)marks.push({p,z:5,h:'<div class="ks'+(!all&&sel===i?' open':'')+(!all&&pg&&i<pg.passed?' done':'')+'">'+pinSvg(p.c,30,true)+'<span class="no" style="background:'+c+'">'+(i+1)+'</span><b>'+p.n+'</b></div>',click:()=>pickStop(di,i)});
    else marks.push({p,z:2,h:'<div class="kd">'+pinSvg(p.c,18,true)+'</div>',click:()=>pickStop(di,i)});
   });
  });
- if(!all){
+ if(pool||ord)trip.pool.forEach(id=>{const p=P[id];marks.push({p,z:6,h:'<div class="kp'+(phi===id?' on':'')+'">'+pinSvg(p.c,26,true)+'<b>'+p.n+'</b></div>',click:()=>pickPool(id)});});
+ if(dv){
   const rows=sched(sd);
   rows.forEach((r,i)=>{if(r.s)marks.push({p:along(r.s.path,.5),z:4,need:[r.p,rows[i+1].p],h:'<div class="kc" style="border-color:'+COL[sd%5]+'">'+(r.s.walk?ic('shoe',12):'')+r.s.min+'분</div>'});});
  }

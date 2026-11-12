@@ -56,7 +56,8 @@ function fitTo(pts,extra){
  go();
 }
 function refit(){
- if(all)fitTo(allPts());
+ if(pool||ord)fitTo((ord?dayPts(sd):allPts()).concat(trip.pool.map(id=>P[id])));
+ else if(all)fitTo(allPts());
  else if(sel!=null&&trip.days[sd].items[sel])fitTo([curP()].concat(trip.days[sd].items[sel].alts.map(id=>P[id])),nb.r);
  else fitTo(dayPts(sd));
 }
@@ -80,12 +81,12 @@ map.addEventListener('wheel',e=>{e.preventDefault();V.s=Math.max(2.5,Math.min(16
 
 function pickNb(id){nb.hi=id;renderList();drawMap();const row=list.querySelector('[data-id="'+id+'"]');if(row)row.scrollIntoView({block:'nearest'});}
 function pickStop(di,i){
- if(all||di!==sd){all=false;sd=di;sel=i;nb.hi=null;}else sel=sel===i?null:i;
+ if(all||pool||di!==sd){all=false;pool=false;sd=di;sel=i;nb.hi=null;}else sel=sel===i?null:i;
  ahi=null;afterSel();
 }
 /* 차선책 노드를 누르면 원래 방문지와 함께 보이도록 지도를 옮긴다 */
 function pickAlt(i,id){
- all=false;sel=i;ahi=id;nb.hi=null;
+ all=false;pool=false;sel=i;ahi=id;nb.hi=null;
  if(sheetH<220)setSheet(snaps()[1],false);
  fitTo([curP(),P[id]],.6);renderAll();
 }

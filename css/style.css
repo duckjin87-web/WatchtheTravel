@@ -108,6 +108,28 @@ button.card.cm{padding:10px 12px;background:var(--paper);border:1px solid var(--
 a.chip{text-decoration:none;color:inherit}
 #toast{position:absolute;left:50%;top:94px;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:8px 14px;border-radius:18px;font-size:13px;z-index:7;opacity:0;pointer-events:none;transition:opacity .2s;max-width:calc(100% - 32px);width:max-content;text-align:center}
 #toast.act.on{pointer-events:auto}
+/* 후보·순서 정하기 */
+#ordbar{position:absolute;left:12px;right:12px;top:12px;z-index:3;display:none;align-items:center;gap:8px;flex-wrap:wrap;background:var(--ink);color:var(--paper);border-radius:14px;padding:8px 10px 8px 14px;font-size:13px}
+#app.ord #ordbar{display:flex}#app.ord .top{display:none}#app.ord #legend{display:none}
+#ordbar b{font-weight:500}
+.ob{display:flex;gap:6px;margin-left:auto}
+.ob button{border:1px solid rgba(255,255,255,.35);background:none;color:inherit;border-radius:14px;min-height:32px;padding:0 10px;font-size:13px;cursor:pointer;display:inline-flex;align-items:center}
+.ob button.pri{background:var(--paper);color:var(--ink);border-color:var(--paper);font-weight:500}
+.ob button:disabled{opacity:.35;cursor:default}
+.kp{position:relative;cursor:pointer;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))}
+.kp b{position:absolute;left:30px;top:50%;transform:translateY(-50%);white-space:nowrap;color:#14181D;font-size:11px;font-weight:500;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 3px #fff}
+.ks b,.kp b,.kalt b{pointer-events:none}
+.kp.on::before{content:'';position:absolute;inset:-5px;border:2px solid #14181D;border-radius:50%}
+.pool-act{display:flex;gap:8px;flex-wrap:wrap;padding:6px 0 8px}
+.pool-act .chip.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.pool-act .chip:disabled{opacity:.4;cursor:default}
+.prow{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line);cursor:pointer}
+.prow>div{flex:1;min-width:0}.prow.on .nm{text-decoration:underline;text-underline-offset:3px}
+.auto{background:var(--bg);border-radius:10px;padding:12px;display:grid;gap:10px;margin-bottom:8px}
+.arow{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:14px}
+.arow select{max-width:55%;border:1px solid var(--line);border-radius:8px;padding:6px;background:var(--paper);font-size:14px}
+.arow input[type=checkbox]{width:20px;height:20px}
+.auto .btn-main{margin-top:0;padding:11px;font-size:15px}
 /* 여행 목록 / 새 여행 */
 #home,#newtrip{position:absolute;inset:0;background:var(--bg);z-index:5;display:none;flex-direction:column;overflow-y:auto}
 #home.on,#newtrip.on{display:flex}
