@@ -5,3 +5,4 @@ $('#refit').innerHTML=ic('target');
 $('#gps').innerHTML=ic('nav');
 $('#sclose').innerHTML=ic('x');
 $('#home-open').innerHTML=ic('left');
+$('#share-btn').innerHTML=ic('share');

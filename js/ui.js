@@ -95,7 +95,7 @@ function detail(i,r){
  h+='</div><p class="foot">'+(KM?'카카오 로컬 검색 결과예요. 카카오 API는 평점을 주지 않아서 평점은 아직 표시하지 않아요.':'예시 데이터예요. 카카오와 네이버 검색 결과를 합쳐 보여주고, 같은 장소는 하나로 묶어요. 네이버 검색 API는 평점을 주지 않아서 평점은 카카오 장소 상세 값만 표시해요.')+'</p></div>';
  return h;
 }
-function renderAll(){renderTabs();pg=prog();renderG();renderList();drawMap();renderOrdbar();saveTrip();}
+function renderAll(){renderTabs();pg=prog();renderG();renderList();drawMap();renderOrdbar();renderShnote();saveTrip();}
 
 function toast(t,undo){
  const el=$('#toast');el.textContent=t;

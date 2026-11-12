@@ -2,11 +2,13 @@
 function init(){
  $('#legend').innerHTML=CATS.map(c=>'<span>'+pinSvg(c,14,true)+c+'</span>').join('');
  size();loadTrip();
- const st=startTrip();if(st)trip=st;
+ /* 공유 링크(#s=)로 열었으면 받은 여행 화면부터 */
+ const inc=location.hash.indexOf('#s=')===0,st=inc?null:startTrip();if(st)trip=st;
  $('#title').value=trip.title;$('#dstart').value=trip.start;
  setSheet(Math.round(H*.52),false);
- if(!st)openHome();
+ if(!st&&!inc)openHome();
  fitTo(dayPts(sd));renderAll();
+ if(inc)openIncoming();
 }
 window.addEventListener('resize',()=>{size();const S2=snaps();setSheet(Math.min(sheetH,S2[2]),false);refit();});
 function boot(){
