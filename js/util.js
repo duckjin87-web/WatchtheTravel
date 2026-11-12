@@ -4,3 +4,4 @@ $('#open-s').innerHTML=ic('search')+' 장소 검색';
 $('#refit').innerHTML=ic('target');
 $('#gps').innerHTML=ic('nav');
 $('#sclose').innerHTML=ic('x');
+$('#home-open').innerHTML=ic('left');

@@ -1,7 +1,10 @@
 /* ---------- 시작 ---------- */
 function init(){
  size();loadTrip();
+ const st=startTrip();if(st)trip=st;
+ $('#title').value=trip.title;$('#dstart').value=trip.start;
  setSheet(Math.round(H*.52),false);
+ if(!st)openHome();
  fitTo(dayPts(sd));renderAll();
 }
 window.addEventListener('resize',()=>{size();const S2=snaps();setSheet(Math.min(sheetH,S2[2]),false);refit();});

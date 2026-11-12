@@ -47,33 +47,45 @@ const defStay=()=>60;
 const item=id=>({id,stay:defStay(P[id]),mode:'car',alts:[]});
 const mk=ids=>ids.map(item);
 
-const trip={start:'2026-10-24',days:[
+/* 여행: TRIPS 에 모두 두고, 지금 열린 여행이 trip 이다 */
+let trip={id:'t1',title:'제주 가을 여행',start:'2026-10-24',days:[
  {start:'09:00',items:mk([S.air,S.ham,S.man,S.sung,S.sup])},
  {start:'09:30',items:mk([S.hyup,S.osul,S.jung,S.chun])},
  {start:'10:00',items:mk([S.yong,S.dong,S.arbo,S.air])}
 ]};
+let TRIPS=[trip],LAST={cur:'t1',at:0};
 let sd=0,all=false,ahi=null,sel=null,nb={r:3,t:'전체',s:'전체',min:0,hi:null},sq='',scat='전체',pg=null,me=null,dpend=-1,gmsg='';
 
-/* 저장: 바뀔 때마다 이 브라우저(localStorage)에 저장한다. 계정·여러 기기 저장은 예정 */
-const SKEY='wt.trip.v1';
+/* 저장: 바뀔 때마다 이 브라우저(localStorage)에 모든 여행을 저장한다. 계정·여러 기기 저장은 예정
+   예전 한 여행짜리 저장(wt.trip.v1)은 처음 열 때 첫 여행으로 옮긴다 */
+const TKEY='wt.trips.v1',SKEY='wt.trip.v1';
 function saveTrip(){
  try{
-  const ids=new Set();trip.days.forEach(d=>d.items.forEach(it=>{ids.add(it.id);it.alts.forEach(a=>ids.add(a));}));
-  const places={};ids.forEach(id=>{const p=P[id];places[id]={id,n:p.n,c:p.c,lat:p.lat,lng:p.lng,a:p.a,url:p.url,src:p.src};});
-  localStorage.setItem(SKEY,JSON.stringify({title:$('#title').value,start:trip.start,days:trip.days,places}));
+  if(TRIPS.indexOf(trip)>-1)trip.title=clean($('#title').value.trim())||'이름 없는 여행';
+  /* 목록 화면에 있는 동안은 "마지막에 본 시각"을 바꾸지 않는다 */
+  if(!$('#home').classList.contains('on'))LAST={cur:trip.id,at:Date.now()};
+  const places={};
+  TRIPS.forEach(t=>t.days.forEach(d=>d.items.forEach(it=>[it.id].concat(it.alts).forEach(id=>{
+   const p=P[id];if(p&&!places[id])places[id]={id,n:p.n,c:p.c,lat:p.lat,lng:p.lng,a:p.a,url:p.url,src:p.src};
+  }))));
+  localStorage.setItem(TKEY,JSON.stringify({cur:LAST.cur,at:LAST.at,trips:TRIPS.map(t=>({id:t.id,title:t.title,start:t.start,arch:t.arch,days:t.days})),places}));
  }catch(e){}
 }
 function loadTrip(){
- let s=null;try{s=JSON.parse(localStorage.getItem(SKEY));}catch(e){}
- if(!s||!Array.isArray(s.days)||!s.days.length)return;
+ let s=null;try{s=JSON.parse(localStorage.getItem(TKEY));}catch(e){}
+ if(!s||!Array.isArray(s.trips)){
+  let o=null;try{o=JSON.parse(localStorage.getItem(SKEY));}catch(e){}
+  if(!o||!Array.isArray(o.days)||!o.days.length)return;
+  s={cur:'t1',at:0,places:o.places||{},trips:[{id:'t1',title:o.title||trip.title,start:o.start||trip.start,days:o.days}]};
+ }
  Object.values(s.places||{}).forEach(q=>{
   if(P[q.id]){if(CATS.indexOf(q.c)>-1)P[q.id].c=q.c;return;}
   if(q.lat==null)return;
   const p=Object.assign({r:null,v:null,src:'카카오'},q,KM?proj(q.lat,q.lng):llToXY(q.lat,q.lng));DB.push(p);P[p.id]=p;
  });
  const ok=id=>P[id]&&(!KM||P[id].lat!=null);
- trip.start=s.start||trip.start;
- trip.days=s.days.map(d=>({start:d.start||'09:00',items:(d.items||[]).filter(it=>ok(it.id)).map(it=>({id:it.id,stay:it.stay||60,mode:it.mode==='walk'?'walk':'car',alts:(it.alts||[]).filter(ok)}))}));
- if(s.title)$('#title').value=s.title;
- $('#dstart').value=trip.start;
+ TRIPS=s.trips.filter(t=>t&&Array.isArray(t.days)&&t.days.length).map(t=>({id:String(t.id),title:t.title||'이름 없는 여행',start:t.start||trip.start,arch:typeof t.arch==='boolean'?t.arch:undefined,
+  days:t.days.map(d=>({start:d.start||'09:00',items:(d.items||[]).filter(it=>ok(it.id)).map(it=>({id:it.id,stay:it.stay||60,mode:it.mode==='walk'?'walk':'car',alts:(it.alts||[]).filter(ok)}))}))}));
+ LAST={cur:s.cur,at:s.at||0};
+ trip=TRIPS.find(t=>t.id===s.cur)||TRIPS[0]||trip;
 }
