@@ -51,7 +51,7 @@ function openHome(){stopAll();renderG();hmenu=null;hdel=null;htab=tripState(trip
 function closeHome(){home.classList.remove('on');}
 function openTrip(t){
  stopAll();gmsg='';trip=t;sd=0;all=false;pool=false;ord=null;phi=null;sel=null;ahi=null;nb.hi=null;dpend=-1;
- $('#title').value=t.title;$('#dstart').value=t.start;
+ $('#title').value=t.title;$('#dstart').value=t.start;$('#head-view').hidden=false;$('#head-edit').hidden=true;
  closeHome();refit();renderAll();
 }
 const tripById=id=>TRIPS.find(t=>t.id===id);
