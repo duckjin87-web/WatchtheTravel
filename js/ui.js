@@ -95,7 +95,7 @@ function detail(i,r){
  h+='</div><p class="foot">'+(KM?'카카오 로컬 검색 결과예요. 카카오 API는 평점을 주지 않아서 평점은 아직 표시하지 않아요.':'예시 데이터예요. 카카오와 네이버 검색 결과를 합쳐 보여주고, 같은 장소는 하나로 묶어요. 네이버 검색 API는 평점을 주지 않아서 평점은 카카오 장소 상세 값만 표시해요.')+'</p></div>';
  return h;
 }
-function renderAll(){renderTabs();pg=prog();renderG();renderList();drawMap();renderOrdbar();renderShnote();saveTrip();}
+function renderAll(){renderTabs();pg=prog();renderG();renderList();drawMap();renderOrdbar();renderShnote();renderHead();saveTrip();}
 
 function toast(t,undo){
  const el=$('#toast');el.textContent=t;
@@ -185,7 +185,16 @@ $('#tabs').addEventListener('click',e=>{
 list.addEventListener('change',e=>{if(!ap)return;if(e.target.id==='ap-h')ap.h=e.target.value;if(e.target.id==='ap-keep')ap.keep=e.target.checked;});
 $('#sum').addEventListener('change',e=>{if(e.target.id==='stime'&&e.target.value){trip.days[sd].start=e.target.value;renderAll();}});
 $('#dstart').addEventListener('change',e=>{if(e.target.value){trip.start=e.target.value;renderAll();}});
-$('#title').addEventListener('input',saveTrip);
+/* 제목·출발일: 평소엔 글자로만 보이고(시트를 끌 때 입력칸이 잡히지 않게), 연필을 눌러야 고친다 */
+function renderHead(){$('#ttl-text').textContent=trip.title;$('#date-text').textContent=mdw(trip.start)+' 출발';}
+function editHead(on){
+ $('#head-view').hidden=on;$('#head-edit').hidden=!on;
+ if(on){$('#title').value=trip.title;$('#dstart').value=trip.start;setTimeout(()=>$('#title').focus(),30);return;}
+ trip.title=clean($('#title').value.trim())||'이름 없는 여행';$('#title').value=trip.title;renderAll();
+}
+$('#edit-btn').addEventListener('click',()=>editHead(true));
+$('#edit-done').addEventListener('click',()=>editHead(false));
+$('#title').addEventListener('keydown',e=>{if(e.key==='Enter')editHead(false);});
 $('#refit').addEventListener('click',()=>{sel=null;nb.hi=null;ahi=null;refit();renderAll();});
 
 /* ---------- 검색 ---------- */

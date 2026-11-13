@@ -6,3 +6,4 @@ $('#gps').innerHTML=ic('nav');
 $('#sclose').innerHTML=ic('x');
 $('#home-open').innerHTML=ic('left');
 $('#share-btn').innerHTML=ic('share');
+$('#edit-btn').innerHTML=ic('edit');
