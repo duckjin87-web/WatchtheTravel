@@ -153,6 +153,8 @@ function openCand(id){
   +'</div><button class="chip big" data-cb="del">'+ic('trash',16)+'후보에서 빼기</button></div>';
  cbox.classList.add('on');renderList();drawMap();
 }
+/* 지도 빈 곳을 탭하면 카드를 닫는다 (끌어서 움직인 것은 제외) */
+function mapTap(){if(cbox.classList.contains('on'))closeCand();}
 function closeCand(){cbox.classList.remove('on');phi=null;renderList();drawMap();}
 cbox.addEventListener('click',e=>{
  const b=e.target.closest('[data-cb]');if(!b)return;const a=b.dataset.cb,id=phi;

@@ -56,6 +56,7 @@ function kakaoMap(){
   });
  }
  K.event.addListener(km,'idle',draw);
+ K.event.addListener(km,'click',()=>mapTap());
 
  /* 바텀시트에 가리지 않도록 아래쪽 여백을 시트 높이만큼 준다 */
  function fit(pts,extra){

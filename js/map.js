@@ -64,7 +64,8 @@ function refit(){
 
 /* ---------- 지도 제스처 ---------- */
 const ptrs=new Map();
-map.addEventListener('pointerdown',e=>{map.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,[e.clientX,e.clientY]);cancelAnimationFrame(raf);});
+let tap0=null;
+map.addEventListener('pointerdown',e=>{map.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,[e.clientX,e.clientY]);tap0=ptrs.size===1?[e.clientX,e.clientY]:null;cancelAnimationFrame(raf);});
 map.addEventListener('pointermove',e=>{
  if(!ptrs.has(e.pointerId))return;const p=ptrs.get(e.pointerId);
  if(ptrs.size===1){V.cx-=(e.clientX-p[0])/V.s;V.cy-=(e.clientY-p[1])/V.s;}
@@ -75,7 +76,7 @@ map.addEventListener('pointermove',e=>{
  }
  ptrs.set(e.pointerId,[e.clientX,e.clientY]);T={cx:V.cx,cy:V.cy,s:V.s};drawMap();
 });
-map.addEventListener('pointerup',e=>ptrs.delete(e.pointerId));
+map.addEventListener('pointerup',e=>{ptrs.delete(e.pointerId);if(tap0&&Math.hypot(e.clientX-tap0[0],e.clientY-tap0[1])<6)mapTap();tap0=null;});
 map.addEventListener('pointercancel',e=>ptrs.delete(e.pointerId));
 map.addEventListener('wheel',e=>{e.preventDefault();V.s=Math.max(2.5,Math.min(160,V.s*(e.deltaY<0?1.15:.87)));T={cx:V.cx,cy:V.cy,s:V.s};drawMap();},{passive:false});
 
