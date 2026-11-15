@@ -95,7 +95,9 @@ function scene(){
    else marks.push({p,z:2,h:'<div class="kd">'+pinSvg(p.c,18,true)+'</div>',click:()=>pickStop(di,i)});
   });
  });
- if(pool||ord)trip.pool.forEach(id=>{const p=P[id];marks.push({p,z:6,h:'<div class="kp'+(phi===id?' on':'')+'">'+pinSvg(p.c,26,true)+'<b>'+p.n+'</b></div>',click:()=>pickPool(id)});});
+ /* 후보: 후보 탭·순서 정하기에서는 이름과 함께, 전체 탭에서는 선 없이 테두리 모양으로만 */
+ if(pool||ord||all)trip.pool.forEach(id=>{const p=P[id],simple=all&&!ord;
+  marks.push({p,z:simple?4:6,h:'<div class="kp'+(simple?' simple':'')+(phi===id?' on':'')+'" title="'+p.n+'">'+pinSvg(p.c,simple?22:26,!simple)+(simple?'':'<b>'+p.n+'</b>')+'</div>',click:()=>pickPool(id)});});
  if(dv){
   const rows=sched(sd);
   rows.forEach((r,i)=>{if(r.s)marks.push({p:along(r.s.path,.5),z:4,need:[r.p,rows[i+1].p],h:'<div class="kc" style="border-color:'+COL[sd%5]+'">'+(r.s.walk?ic('shoe',12):'')+r.s.min+'분</div>'});});
