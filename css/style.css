@@ -57,6 +57,11 @@ button.card.cm{padding:10px 12px;background:var(--paper);border:1px solid var(--
 .ed{display:flex;align-items:center;gap:6px;padding:0 8px 8px 12px}
 .ed .stay{display:flex;align-items:center;gap:4px;margin-right:auto}.ed .stay .sub{min-width:64px;text-align:center}
 .ib.sm{width:30px;height:30px}
+.ck{display:inline-flex;align-items:center;gap:3px;border:1px solid var(--line);background:var(--paper);border-radius:15px;min-height:30px;padding:0 9px;font-size:12px;cursor:pointer;flex:none;color:var(--ink)}
+.ck.on{background:#1F8A70;border-color:#1F8A70;color:#fff;font-weight:500}
+.ckt{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--ink2);margin-right:auto}
+.ckin{border:1px solid var(--line);border-radius:8px;padding:3px 5px;font-size:13px;background:var(--paper);color:var(--ink)}
+.stop.done .card .cm,.stop.done .card.cm{opacity:.6}
 .grip{touch-action:none;cursor:grab}
 .stop{transition:transform .15s ease}.stop.dragging{position:relative;z-index:2;transition:none;opacity:.92}
 .ci{display:inline-flex;vertical-align:-3px;margin-right:6px;color:var(--ink2)}
@@ -87,7 +92,7 @@ button.card.cm{padding:10px 12px;background:var(--paper);border:1px solid var(--
 .empty{padding:18px 2px;text-align:center}.empty p{margin:2px 0}
 .add{width:100%;min-height:44px;border:1px dashed var(--ink3);background:none;border-radius:10px;cursor:pointer;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:14px}
 .foot{font-size:12px;color:var(--ink3);margin:8px 0 0}
-.stop.done .card{opacity:.55}
+
 #gstat{display:none;justify-content:space-between;align-items:center;gap:8px;font-size:13px;padding:2px 0 8px}
 #search{position:absolute;inset:0;background:var(--paper);z-index:6;display:none;flex-direction:column;padding:12px 14px}
 #search.on{display:flex}

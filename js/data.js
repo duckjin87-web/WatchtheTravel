@@ -73,6 +73,7 @@ function saveTrip(){
   localStorage.setItem(TKEY,JSON.stringify({cur:LAST.cur,at:LAST.at,trips:TRIPS.map(t=>({id:t.id,title:t.title,start:t.start,arch:t.arch,pool:t.pool,days:t.days})),places}));
  }catch(e){}
 }
+const okDone=v=>typeof v==='number'&&v>=0&&v<1440?Math.round(v):undefined;
 function loadTrip(){
  let s=null;try{s=JSON.parse(localStorage.getItem(TKEY));}catch(e){}
  if(!s||!Array.isArray(s.trips)){
@@ -87,7 +88,7 @@ function loadTrip(){
  });
  const ok=id=>P[id]&&(!KM||P[id].lat!=null);
  TRIPS=s.trips.filter(t=>t&&Array.isArray(t.days)&&t.days.length).map(t=>({id:String(t.id),title:t.title||'이름 없는 여행',start:t.start||trip.start,arch:typeof t.arch==='boolean'?t.arch:undefined,pool:(t.pool||[]).filter(ok),
-  days:t.days.map(d=>({start:d.start||'09:00',items:(d.items||[]).filter(it=>ok(it.id)).map(it=>({id:it.id,stay:it.stay||60,mode:it.mode==='walk'?'walk':'car',alts:(it.alts||[]).filter(ok)}))}))}));
+  days:t.days.map(d=>({start:d.start||'09:00',items:(d.items||[]).filter(it=>ok(it.id)).map(it=>({id:it.id,stay:it.stay||60,mode:it.mode==='walk'?'walk':'car',alts:(it.alts||[]).filter(ok),done:okDone(it.done)}))}))}));
  LAST={cur:s.cur,at:s.at||0};
  trip=TRIPS.find(t=>t.id===s.cur)||TRIPS[0]||trip;
 }

@@ -112,7 +112,7 @@ nf.addEventListener('click',e=>{
  }
  if(b.id==='nt-go'){
   const n=dayDiff(nt.a,nt.b||nt.a)+1,src=nt.src;
-  const days=Array.from({length:n},(_,i)=>src&&src.days[i]?JSON.parse(JSON.stringify(src.days[i])):{start:'09:00',items:[]});
+  const days=Array.from({length:n},(_,i)=>src&&src.days[i]?JSON.parse(JSON.stringify(src.days[i]),(k,v)=>k==='done'?undefined:v):{start:'09:00',items:[]});
   const t={id:'t'+Date.now().toString(36),title:clean(nt.name.trim()),start:nt.a,pool:src?src.pool.slice():[],days};
   TRIPS.push(t);closeNew();openTrip(t);toast('"'+t.title+'"을 만들었어요');
  }

@@ -34,7 +34,7 @@ function readPayload(o){
  });
  const ok=id=>typeof id==='string'&&P[id]&&(!KM||P[id].lat!=null);
  const days=o.t.days.slice(0,30).map(d=>({start:/^\d\d:\d\d$/.test(d&&d.start)?d.start:'09:00',
-  items:((d&&d.items)||[]).filter(it=>it&&ok(it.id)).slice(0,60).map(it=>({id:it.id,stay:Math.max(30,Math.min(720,+it.stay||60)),mode:it.mode==='walk'?'walk':'car',alts:(Array.isArray(it.alts)?it.alts:[]).filter(ok).slice(0,10)}))}));
+  items:((d&&d.items)||[]).filter(it=>it&&ok(it.id)).slice(0,60).map(it=>({id:it.id,stay:Math.max(30,Math.min(720,+it.stay||60)),mode:it.mode==='walk'?'walk':'car',alts:(Array.isArray(it.alts)?it.alts:[]).filter(ok).slice(0,10),done:okDone(it.done)}))}));
  return{id:'s'+Date.now().toString(36),title:clean(o.t.title).slice(0,40)||'공유받은 여행',start:/^\d{4}-\d\d-\d\d$/.test(o.t.start)?o.t.start:todayIso(),pool:(Array.isArray(o.t.pool)?o.t.pool:[]).filter(ok).slice(0,100),days,shared:true};
 }
 
