@@ -143,29 +143,40 @@ list.addEventListener('click',e=>{
  if(a==='addnb'){const p=P[b.dataset.id];items.splice(sel+1,0,item(p.id));sel=sel+1;nb.hi=null;toast((sd+1)+'일차에 추가했어요');refit();renderAll();return;}
 });
 
-/* ---------- 끌어서 순서 바꾸기 ---------- */
+/* ---------- 끌어서 순서 바꾸기 ----------
+   목록 위·아래 가장자리 56px 안으로 끌면 목록이 저절로 스크롤된다(가장자리에 가까울수록 빠르게).
+   위치 계산은 스크롤된 만큼(ds)을 더해 내용 기준으로 한다 */
 let drag=null;
 list.addEventListener('pointerdown',e=>{
  const g=e.target.closest('[data-drag]');if(!g||all)return;
  e.preventDefault();g.setPointerCapture(e.pointerId);
  const rows=[...list.querySelectorAll('.stop')],i=+g.dataset.drag;
- drag={i,to:i,y0:e.clientY,rows,box:rows.map(r=>r.getBoundingClientRect())};
- rows[i].classList.add('dragging');
+ drag={i,to:i,y0:e.clientY,y:e.clientY,s0:list.scrollTop,rows,box:rows.map(r=>r.getBoundingClientRect()),raf:0};
+ rows[i].classList.add('dragging');drag.raf=requestAnimationFrame(dragTick);
 });
-list.addEventListener('pointermove',e=>{
- if(!drag)return;const d=drag,dy=e.clientY-d.y0,b=d.box[d.i],cy=(b.top+b.bottom)/2+dy;
+function dragMove(){
+ const d=drag,dy=d.y-d.y0+list.scrollTop-d.s0,b=d.box[d.i],cy=(b.top+b.bottom)/2+dy;
  d.to=d.box.filter((r,k)=>k!==d.i&&cy>(r.top+r.bottom)/2).length;
  d.rows.forEach((r,k)=>{
   const t=k===d.i?dy:(d.i<d.to&&k>d.i&&k<=d.to?-b.height:(d.to<d.i&&k>=d.to&&k<d.i?b.height:0));
   r.style.transform=t?'translateY('+t+'px)':'';
  });
-});
+}
+function dragTick(){
+ if(!drag)return;
+ const r=list.getBoundingClientRect(),z=56,y=drag.y;
+ const v=y<r.top+z?-Math.min(18,Math.ceil((r.top+z-y)/3)):(y>r.bottom-z?Math.min(18,Math.ceil((y-r.bottom+z)/3)):0);
+ if(v){const s=list.scrollTop;list.scrollTop=s+v;if(list.scrollTop!==s)dragMove();}
+ drag.raf=requestAnimationFrame(dragTick);
+}
+list.addEventListener('pointermove',e=>{if(!drag)return;drag.y=e.clientY;dragMove();});
 function endDrag(){
- if(!drag)return;const d=drag;drag=null;
+ if(!drag)return;const d=drag;drag=null;cancelAnimationFrame(d.raf);
  d.rows.forEach(r=>{r.style.transform='';r.classList.remove('dragging');});
  if(d.to!==d.i){
   const items=trip.days[sd].items,cur=sel!=null?items[sel]:null,x=items.splice(d.i,1)[0];
   items.splice(d.to,0,x);sel=cur?items.indexOf(cur):null;refit();
+  toast(P[x.id].n+' → '+(d.to+1)+'번째로 옮겼어요');
  }
  renderAll();
 }
