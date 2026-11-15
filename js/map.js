@@ -7,7 +7,9 @@ for(let a=0;a<6.2832;a+=.12){const r=1+.03*Math.sin(3*a+1)+.025*Math.sin(5*a+2);
  RING.push([45+41*.86*Math.cos(a),20.5+18.5*.8*Math.sin(a)]);}
 const CROSS=[[6,24],[20,20],[45,19],[70,19],[84,18]];
 const size=()=>{const a=map.parentNode;W=a.clientWidth;H=a.clientHeight;};
-const vb=()=>{const top=64,bot=Math.max(H-sheetH,top+140);return[top,bot];};
+/* 지도 아래를 가리는 높이: 평소엔 일정 창, 검색 미리보기 중엔 검색창 */
+const botCover=()=>srchOn()?$('#search').offsetHeight:sheetH;
+const vb=()=>{const top=srchOn()?16:64,bot=Math.max(H-botCover(),top+140);return[top,bot];};
 const pr=(x,y)=>{const b=vb();return[(x-V.cx)*V.s+W/2,(y-V.cy)*V.s+(b[0]+b[1])/2];};
 const path=(pts,closed)=>pts.map((p,i)=>{const q=pr(p[0],p[1]);return(i?'L':'M')+q[0].toFixed(1)+' '+q[1].toFixed(1);}).join('')+(closed?'Z':'');
 
@@ -56,6 +58,7 @@ function fitTo(pts,extra){
  go();
 }
 function refit(){
+ if(srchOn()&&spv&&P[spv]){fitTo([P[spv]]);return;}
  if(pool||ord)fitTo((ord?dayPts(sd):allPts()).concat(trip.pool.map(id=>P[id])));
  else if(all)fitTo(allPts().concat(trip.pool.map(id=>P[id])));
  else if(sel!=null&&trip.days[sd].items[sel])fitTo([curP()].concat(trip.days[sd].items[sel].alts.map(id=>P[id])),nb.r);

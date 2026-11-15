@@ -65,7 +65,7 @@ function kakaoMap(){
   if(!pts.length){km.setCenter(new K.LatLng(GEO.lat,GEO.lng));km.setLevel(10);return;}
   const b=new K.LatLngBounds();
   pts.forEach(p=>{b.extend(pos({x:p.x-extra,y:p.y-extra}));b.extend(pos({x:p.x+extra,y:p.y+extra}));});
-  km.setBounds(b,72,28,sheetH+24,28);
+  km.setBounds(b,srchOn()?24:72,28,botCover()+24,28);
  }
 
  /* ---- 근처 음식점(FD6)·카페(CE7)·숙소(AD5): 장소+반경별로 캐시 ---- */

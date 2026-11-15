@@ -60,6 +60,7 @@ function allList(){
     +(last?'':driveRow(r,i,false))+'</div></div>';
   });
  });
+ if(trip.pool.length)h+='<div class="dtitle dsec">'+ic('pin',16)+'후보 '+trip.pool.length+'곳<span class="sub">누르면 날짜를 골라 넣어요</span></div>'+trip.pool.map(poolRow).join('');
  return h;
 }
 function chip(act,v,label,on){return '<button class="chip" data-act="'+act+'" data-v="'+v+'" aria-pressed="'+on+'">'+label+'</button>';}
@@ -211,8 +212,19 @@ $('#refit').addEventListener('click',()=>{sel=null;nb.hi=null;ahi=null;refit();r
 /* ---------- 검색 ---------- */
 /* lastQ: 후보에 담은 뒤 검색칸은 비우고, 직전 검색 결과는 새로 입력할 때까지 보여준다 */
 let spick=null,lastQ='';
+/* spv: 지도에서 보고 있는 검색 결과 / SRES: 지금 목록의 결과들(지도에 작은 핀) */
+let spv=null,SRES=[];
+const srchOn=()=>{const S=$('#search');return S.classList.contains('on')&&S.classList.contains('split');};
+function previewSearch(id){
+ spv=id;$('#search').classList.add('split');$('#app').classList.add('srch');
+ fitTo([P[id]]);renderSearch();
+ const r=$('#sres').querySelector('.sr[data-pv="'+id+'"]');if(r)r.scrollIntoView({block:'nearest'});
+}
 function openSearch(){spick=null;$('#search').classList.add('on');renderSearch();setTimeout(()=>$('#sq').focus(),50);}
-function closeSearch(){$('#search').classList.remove('on');sq='';lastQ='';$('#sq').value='';}
+function closeSearch(){
+ const was=srchOn();$('#search').classList.remove('on','split');$('#app').classList.remove('srch');sq='';lastQ='';$('#sq').value='';spv=null;SRES=[];
+ if(was){refit();drawMap();}
+}
 /* 날짜가 여러 개면 "추가"를 눌렀을 때 넣을 날을 고른다 */
 const picker=id=>'<div class="pick"><p class="sub">어디에 넣을까요?</p><div class="chips"><button class="chip" data-id="'+id+'" data-day="pool">'+ic('pin',14)+'후보에 담기</button>'+trip.days.map((d,i)=>'<button class="chip" data-id="'+id+'" data-day="'+i+'"><i class="dot" style="background:'+COL[i%5]+'"></i>'+(i+1)+'일차 '+dlabel(i)+'</button>').join('')+'</div></div>';
 function renderSearch(){
@@ -223,10 +235,11 @@ function renderSearch(){
  let res;
  if(KM&&q){
   const r=KM.search(q,scat);
-  if(!r||r.err){$('#sres').innerHTML=note+'<div class="empty"><p class="sub">'+(r?'카카오 장소 검색에 실패했어요. 잠시 후 다시 시도해 주세요.':'검색 중이에요…')+'</p></div>';return;}
+  if(!r||r.err){SRES=[];if(srchOn())drawMap();$('#sres').innerHTML=note+'<div class="empty"><p class="sub">'+(r?'카카오 장소 검색에 실패했어요. 잠시 후 다시 시도해 주세요.':'검색 중이에요…')+'</p></div>';return;}
   res=r.list;
  }else res=DB.filter(p=>(!KM||p.lat!=null)&&(scat==='전체'||p.c===scat)&&(!q||p.n.indexOf(q)>-1||p.c.indexOf(q)>-1)).slice(0,40);
- $('#sres').innerHTML=note+(res.length?res.map(p=>'<div class="sr"><div>'+nameRow(p).replace('class="nm"','class="nm" style="font-size:14px"')+'<div class="sub">'+[p.c,p.r!=null?'<span class="star">★</span> '+p.r.toFixed(1)+' ('+p.v+')':'',p.a||'',inTrip[p.id]?inTrip[p.id].join(', ')+' 포함':''].filter(Boolean).join(' · ')+'</div></div><button class="chip" data-add="'+p.id+'" aria-expanded="'+(spick===p.id)+'">'+ic('plus',14)+'추가</button></div>'+(spick===p.id?picker(p.id):'')).join('')
+ SRES=res.map(p=>p.id);if(srchOn())drawMap();
+ $('#sres').innerHTML=note+(res.length?res.map(p=>'<div class="sr'+(spv===p.id?' on':'')+'" data-pv="'+p.id+'"><div>'+nameRow(p).replace('class="nm"','class="nm" style="font-size:14px"')+'<div class="sub">'+[p.c,p.r!=null?'<span class="star">★</span> '+p.r.toFixed(1)+' ('+p.v+')':'',p.a||'',inTrip[p.id]?inTrip[p.id].join(', ')+' 포함':''].filter(Boolean).join(' · ')+'</div></div><button class="chip" data-add="'+p.id+'" aria-expanded="'+(spick===p.id)+'">'+ic('plus',14)+'추가</button></div>'+(spick===p.id?picker(p.id):'')).join('')
   :'<div class="empty"><p class="nm">검색 결과가 없어요</p><p class="sub">다른 이름이나 종류로 찾아보세요.</p></div>');
 }
 function addTo(id,di){
@@ -250,7 +263,8 @@ $('#sc').addEventListener('click',e=>{const b=e.target.closest('[data-c]');if(b)
 $('#sres').addEventListener('click',e=>{
  const ad=e.target.closest('[data-add]');
  if(ad){const id=ad.dataset.add;spick=spick===id?null:id;renderSearch();return;}
- const b=e.target.closest('[data-day]');if(b)addTo(b.dataset.id,b.dataset.day==='pool'?'pool':+b.dataset.day);
+ const b=e.target.closest('[data-day]');if(b){addTo(b.dataset.id,b.dataset.day==='pool'?'pool':+b.dataset.day);return;}
+ const r=e.target.closest('[data-pv]');if(r)previewSearch(r.dataset.pv);
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSearch();});
 
