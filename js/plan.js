@@ -5,13 +5,13 @@
 let ap=null; /* 자동 정리 입력 칸: {n 날짜 수, h 숙소 id, keep 이미 정한 일정 유지} */
 const ordbar=$('#ordbar');
 
+const poolRow=id=>{const p=P[id];
+ return '<div class="prow'+(phi===id?' on':'')+'" data-act="pfocus" data-id="'+id+'">'+pinSvg(p.c,22,true)+'<div><div class="nm" style="font-size:14px">'+p.n+'</div><div class="sub">'+[p.c,p.a||''].filter(Boolean).join(' · ')+'</div></div><button class="ib" data-act="pdel" data-id="'+id+'" aria-label="'+p.n+' 후보에서 빼기">'+ic('x')+'</button></div>';};
 function poolList(){
  const L=trip.pool;let h='<div class="pool-act"><button class="chip" data-act="auto" aria-expanded="'+!!ap+'"'+(L.length?'':' disabled')+'>'+ic('spark',14)+'자동 정리</button><button class="chip on" data-act="order"'+(L.length?'':' disabled')+'>'+ic('tap',14)+'지도에서 순서 정하기</button></div>';
  if(ap&&L.length)h+=autoPanel();
  if(!L.length)h+='<div class="empty"><p class="nm">후보가 비어 있어요</p><p class="sub">장소 검색에서 "추가 → 후보에 담기"로 가고 싶은 곳을 먼저 모아 두세요.</p></div>';
- L.forEach(id=>{const p=P[id];
-  h+='<div class="prow'+(phi===id?' on':'')+'" data-act="pfocus" data-id="'+id+'">'+pinSvg(p.c,22,true)+'<div><div class="nm" style="font-size:14px">'+p.n+'</div><div class="sub">'+[p.c,p.a||''].filter(Boolean).join(' · ')+'</div></div><button class="ib" data-act="pdel" data-id="'+id+'" aria-label="'+p.n+' 후보에서 빼기">'+ic('x')+'</button></div>';
- });
+ h+=L.map(poolRow).join('');
  if(L.length)h+='<button class="add" data-act="open-search">'+ic('plus',16)+' 후보 더 담기</button>';
  return h;
 }
