@@ -46,8 +46,10 @@ function seg(a,b,mode){
 function sched(di){
  const d=trip.days[di];let t=toMin(d.start);const rows=[];
  d.items.forEach((it,i)=>{
-  const p=P[it.id],arr=t,dep=arr+it.stay,nx=d.items[i+1],s=nx?seg(p,P[nx.id],it.mode):null;
-  rows.push({it,p,arr,dep,s,dm:s?s.min:0,km:s?s.km:0});t=dep+(s?s.min:0);
+  /* 방문 완료(it.done, 분)를 누른 곳은 그 시각이 실제 출발 시각이 되고, 뒤 일정이 모두 그만큼 밀리거나 당겨진다.
+     예정 도착보다 먼저 떠났으면 도착도 그 시각으로 본다 */
+  const p=P[it.id],dn=typeof it.done==='number',arr=dn?Math.min(t,it.done):t,dep=dn?it.done:arr+it.stay,nx=d.items[i+1],s=nx?seg(p,P[nx.id],it.mode):null;
+  rows.push({it,p,arr,dep,dn,s,dm:s?s.min:0,km:s?s.km:0});t=dep+(s?s.min:0);
  });
  return rows;
 }
@@ -91,7 +93,7 @@ function scene(){
   const c=COL[di%5],on=all||(dv&&di===sd);
   trip.days[di].items.forEach((it,i)=>{
    const p=P[it.id];
-   if(on)marks.push({p,z:5,h:'<div class="ks'+(!all&&sel===i?' open':'')+(!all&&pg&&i<pg.passed?' done':'')+'">'+pinSvg(p.c,30,true)+'<span class="no" style="background:'+c+'">'+(i+1)+'</span><b>'+p.n+'</b></div>',click:()=>pickStop(di,i)});
+   if(on)marks.push({p,z:5,h:'<div class="ks'+(!all&&sel===i?' open':'')+(!all&&(typeof it.done==='number'||pg&&i<pg.passed)?' done':'')+'">'+pinSvg(p.c,30,true)+'<span class="no" style="background:'+c+'">'+(i+1)+'</span><b>'+p.n+'</b></div>',click:()=>pickStop(di,i)});
    else marks.push({p,z:2,h:'<div class="kd">'+pinSvg(p.c,18,true)+'</div>',click:()=>pickStop(di,i)});
   });
  });

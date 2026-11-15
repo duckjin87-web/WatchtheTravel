@@ -12,7 +12,8 @@ function renderTabs(){
   return;
  }
  const rows=sched(sd),d=trip.days[sd],S=sumOf(rows);
- $('#sum').innerHTML='<span>'+rows.length+'곳 · 이동 '+dur(S.mins)+' · '+fmtD(S.km)+'</span><span style="display:flex;gap:8px;align-items:center">'+(trip.days.length>1?'<button class="chip" data-act="delday">'+(dpend===sd?(d.items.length?d.items.length+'곳 함께 삭제 · 한 번 더':'한 번 더 누르면 삭제'):'날짜 삭제')+'</button>':'')+'<label>시작 <input type="time" id="stime" aria-label="'+(sd+1)+'일차 시작 시각" value="'+d.start+'"></label></span>';
+ const nd=rows.filter(r=>r.dn).length;
+ $('#sum').innerHTML='<span>'+rows.length+'곳'+(nd?' · 완료 '+nd:'')+' · 이동 '+dur(S.mins)+' · '+fmtD(S.km)+'</span><span style="display:flex;gap:8px;align-items:center">'+(trip.days.length>1?'<button class="chip" data-act="delday">'+(dpend===sd?(d.items.length?d.items.length+'곳 함께 삭제 · 한 번 더':'한 번 더 누르면 삭제'):'날짜 삭제')+'</button>':'')+'<label>시작 <input type="time" id="stime" aria-label="'+(sd+1)+'일차 시작 시각" value="'+d.start+'"></label></span>';
 }
 /* 이동 줄: 일차 화면에서는 자동차/도보를 바로 바꿀 수 있다 */
 function driveRow(r,i,edit){
@@ -32,9 +33,11 @@ function renderList(){
   if(!rows.length)h+='<div class="empty"><p class="nm">'+(sd+1)+'일차 일정이 비어 있어요</p><p class="sub">방문지를 추가하면 이동 시간이 자동으로 계산돼요.</p></div>';
   rows.forEach((r,i)=>{
    const last=i===rows.length-1,open=sel===i,alts=r.it.alts;
-   h+='<div class="stop'+(pg&&i<pg.passed?' done':'')+'"><div class="rail"><span class="num" style="background:'+c+'">'+(i+1)+'</span>'+(last?'':'<span class="line" style="background:'+c+'"></span>')+'</div><div class="main">'
+   h+='<div class="stop'+(r.dn||pg&&i<pg.passed?' done':'')+'"><div class="rail"><span class="num" style="background:'+c+'">'+(i+1)+'</span>'+(last?'':'<span class="line" style="background:'+c+'"></span>')+'</div><div class="main">'
     +'<div class="card'+(open?' open':'')+'"><button class="cm" data-act="sel" data-i="'+i+'" aria-expanded="'+open+'">'+nameRow(r.p)+'<div class="tm">'+hm(r.arr)+'–'+hm(r.dep)+'</div></button>'
-    +'<div class="ed"><span class="cat">'+r.p.c+'</span><span class="stay"><button class="ib sm" data-act="stay" data-i="'+i+'" data-v="-30" aria-label="머무는 시간 30분 줄이기">'+ic('minus',16)+'</button><span class="sub">'+dur(r.it.stay)+'</span><button class="ib sm" data-act="stay" data-i="'+i+'" data-v="30" aria-label="머무는 시간 30분 늘리기">'+ic('plus',16)+'</button></span>'
+    +'<div class="ed"><button class="ck'+(r.dn?' on':'')+'" data-act="done" data-i="'+i+'" aria-pressed="'+r.dn+'">'+ic('check',14)+(r.dn?'완료':'방문 완료')+'</button>'
+    +(r.dn?'<label class="ckt">출발 <input type="time" class="ckin" data-i="'+i+'" value="'+hm(r.it.done)+'" aria-label="'+r.p.n+' 실제 출발 시각"></label>'
+     :'<span class="stay"><button class="ib sm" data-act="stay" data-i="'+i+'" data-v="-30" aria-label="머무는 시간 30분 줄이기">'+ic('minus',16)+'</button><span class="sub">'+dur(r.it.stay)+'</span><button class="ib sm" data-act="stay" data-i="'+i+'" data-v="30" aria-label="머무는 시간 30분 늘리기">'+ic('plus',16)+'</button></span>')
     +'<button class="ib sm" data-act="del" data-i="'+i+'" aria-label="'+r.p.n+' 삭제">'+ic('trash',16)+'</button><button class="ib sm grip" data-drag="'+i+'" aria-label="끌어서 순서 바꾸기">'+ic('grip',16)+'</button></div></div>';
    if(alts.length)h+='<div class="alts">'+ic('alt',14)+alts.map(id=>{const q=P[id];return '<button class="achip'+(ahi===id?' on':'')+'" data-act="altgo" data-i="'+i+'" data-id="'+id+'">'+cic(q.c,12)+q.n+' · '+fmtD(dist(r.p,q))+'</button>';}).join('')+'</div>';
    if(open)h+=detail(i,r);
@@ -54,7 +57,7 @@ function allList(){
   if(!rows.length)h+='<p class="sub" style="margin:0 0 8px 32px">일정이 비어 있어요</p>';
   rows.forEach((r,i)=>{
    const last=i===rows.length-1;
-   h+='<div class="stop"><div class="rail"><span class="num" style="background:'+c+'">'+(i+1)+'</span>'+(last?'':'<span class="line" style="background:'+c+'"></span>')+'</div><div class="main">'
+   h+='<div class="stop'+(r.dn?' done':'')+'"><div class="rail"><span class="num" style="background:'+c+'">'+(i+1)+'</span>'+(last?'':'<span class="line" style="background:'+c+'"></span>')+'</div><div class="main">'
     +'<button class="card cm" data-act="go" data-day="'+di+'" data-i="'+i+'">'+nameRow(r.p)+'<div class="tm">'+hm(r.arr)+'–'+hm(r.dep)+'</div></button>'
     +(r.it.alts.length?'<div class="alts">'+ic('alt',14)+'<span class="sub">차선책 '+r.it.alts.length+'곳</span></div>':'')
     +(last?'':driveRow(r,i,false))+'</div></div>';
@@ -119,6 +122,11 @@ list.addEventListener('click',e=>{
  if(a==='pfocus'){fitTo([P[b.dataset.id]],.8);openCand(b.dataset.id);return;}
  if(a==='pdel'){const id=b.dataset.id,k=trip.pool.indexOf(id);trip.pool.splice(k,1);if(phi===id)phi=null;toast(P[id].n+' 후보에서 뺐어요',()=>{trip.pool.splice(k,0,id);renderAll();});renderAll();return;}
  if(a==='stay'){it.stay=Math.max(30,Math.min(720,it.stay+ +v));renderAll();return;}
+ if(a==='done'){
+  if(typeof it.done==='number'){const was=it.done;delete it.done;toast('방문 완료를 취소했어요',()=>{it.done=was;renderAll();});renderAll();return;}
+  const n=new Date();it.done=n.getHours()*60+n.getMinutes();
+  toast(P[it.id].n+' '+hm(it.done)+' 출발로 바꿨어요 · 다음 일정 시간도 맞췄어요',()=>{delete it.done;renderAll();});renderAll();return;
+ }
  if(a==='mode'){it.mode=v;renderAll();const r=sched(sd)[i];if(v==='walk'&&r.s&&r.s.km>3)toast('걷기에는 먼 거리예요 (도보 '+dur(r.dm)+')');return;}
  if(a==='del'){
   items.splice(i,1);const was=sel;sel=sel===i?null:(sel>i?sel-1:sel);
@@ -194,7 +202,9 @@ $('#tabs').addEventListener('click',e=>{
  if(b.dataset.day==='all'){all=true;sel=null;ahi=null;nb.hi=null;dpend=-1;refit();renderAll();return;}
  if(b.dataset.day!=null){all=false;sd=+b.dataset.day;sel=null;ahi=null;nb.hi=null;dpend=-1;refit();renderAll();}
 });
-list.addEventListener('change',e=>{if(!ap)return;if(e.target.id==='ap-h')ap.h=e.target.value;if(e.target.id==='ap-keep')ap.keep=e.target.checked;});
+list.addEventListener('change',e=>{
+ if(e.target.classList.contains('ckin')){const it=trip.days[sd].items[+e.target.dataset.i];if(e.target.value){it.done=toMin(e.target.value);renderAll();}return;}
+ if(!ap)return;if(e.target.id==='ap-h')ap.h=e.target.value;if(e.target.id==='ap-keep')ap.keep=e.target.checked;});
 $('#sum').addEventListener('change',e=>{if(e.target.id==='stime'&&e.target.value){trip.days[sd].start=e.target.value;renderAll();}});
 $('#dstart').addEventListener('change',e=>{if(e.target.value){trip.start=e.target.value;renderAll();}});
 /* 제목·출발일: 평소엔 글자로만 보이고(시트를 끌 때 입력칸이 잡히지 않게), 연필을 눌러야 고친다 */
