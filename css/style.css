@@ -121,6 +121,14 @@ a.chip{text-decoration:none;color:inherit}
 #shnote{display:none;align-items:center;gap:8px;justify-content:space-between;background:#FDF3E1;color:#5B3A00;border-radius:10px;padding:6px 6px 6px 10px;margin:4px 0 2px;font-size:12px}
 #shnote .chip{flex:none;background:#14181D;color:#fff;border-color:#14181D}
 #sharebox{position:absolute;inset:0;z-index:6;display:none}
+#candbox{display:none}#candbox.on{display:block}
+#candbox .shp{z-index:6;box-shadow:0 -6px 20px rgba(0,0,0,.18);max-height:70%;overflow-y:auto}
+.cand .nh{gap:10px}
+.cslots{display:grid;gap:8px}
+.cslot{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;border:1px solid var(--line);background:var(--paper);border-radius:12px;padding:10px 12px;cursor:pointer;font-size:14px}
+.cslot.rec{border-color:var(--ink);border-width:2px;padding:9px 11px}
+.cslot em{font-style:normal;font-size:11px;font-weight:500;background:var(--ink);color:var(--paper);border-radius:8px;padding:0 6px;margin-left:4px}
+.kp.simple{filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.3))}
 #sharebox.on{display:block}
 .shd{position:absolute;inset:0;background:rgba(20,24,29,.4)}
 .shp{position:absolute;left:0;right:0;bottom:0;background:var(--paper);border-radius:16px 16px 0 0;padding:14px 16px calc(20px + env(safe-area-inset-bottom,0px));display:grid;gap:12px}

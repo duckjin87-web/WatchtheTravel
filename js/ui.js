@@ -115,7 +115,7 @@ list.addEventListener('click',e=>{
  if(a==='auto'){ap=ap?null:{n:Math.max(1,trip.days.length),h:hotels()[0]||'',keep:true};renderList();return;}
  if(a==='apn'){ap.n=Math.max(1,Math.min(14,ap.n+ +v));renderList();return;}
  if(a==='apgo'){runAuto();return;}
- if(a==='pfocus'){phi=b.dataset.id;fitTo([P[phi]],.8);renderList();drawMap();return;}
+ if(a==='pfocus'){fitTo([P[b.dataset.id]],.8);openCand(b.dataset.id);return;}
  if(a==='pdel'){const id=b.dataset.id,k=trip.pool.indexOf(id);trip.pool.splice(k,1);if(phi===id)phi=null;toast(P[id].n+' 후보에서 뺐어요',()=>{trip.pool.splice(k,0,id);renderAll();});renderAll();return;}
  if(a==='stay'){it.stay=Math.max(30,Math.min(720,it.stay+ +v));renderAll();return;}
  if(a==='mode'){it.mode=v;renderAll();const r=sched(sd)[i];if(v==='walk'&&r.s&&r.s.km>3)toast('걷기에는 먼 거리예요 (도보 '+dur(r.dm)+')');return;}
@@ -175,7 +175,7 @@ list.addEventListener('pointercancel',endDrag);
 $('#tabs').addEventListener('click',e=>{
  const b=e.target.closest('button');if(!b)return;
  if(prev){toast('미리보기를 적용하거나 취소해 주세요');return;}
- ord=null;phi=null;
+ ord=null;phi=null;cbox.classList.remove('on');
  if(b.dataset.day==='pool'){pool=true;all=false;sel=null;ahi=null;nb.hi=null;dpend=-1;refit();renderAll();return;}
  pool=false;
  if(b.dataset.act==='newday'){trip.days.push({start:'09:00',items:[]});all=false;sd=trip.days.length-1;sel=null;toast((sd+1)+'일차를 만들었어요');refit();renderAll();return;}

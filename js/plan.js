@@ -28,12 +28,12 @@ function autoPanel(){
 /* 순서 정하기 시작: 비어 있는 첫 날, 없으면 보던 날 끝에 붙인다 */
 function startOrder(){
  const e=trip.days.findIndex(d=>!d.items.length),di=e>-1?e:(all||pool?0:sd);
- pool=false;all=false;sd=di;sel=null;ahi=null;phi=null;ap=null;ord={di,added:[]};
+ pool=false;all=false;sd=di;sel=null;ahi=null;phi=null;ap=null;ord={di,added:[]};cbox.classList.remove('on');
  if(sheetH>snaps()[1]+10)setSheet(snaps()[1],false);
  fitTo(dayPts(di).concat(trip.pool.map(id=>P[id])));renderAll();
 }
 function pickPool(id){
- if(!ord){phi=id;renderList();drawMap();const r=list.querySelector('.prow[data-id="'+id+'"]');if(r)r.scrollIntoView({block:'nearest'});return;}
+ if(!ord){openCand(id);return;}
  trip.pool.splice(trip.pool.indexOf(id),1);trip.days[ord.di].items.push(item(id));ord.added.push(id);
  if(!trip.pool.length){ord=null;toast('후보를 모두 일정에 넣었어요');}
  renderAll();
@@ -131,3 +131,38 @@ function runAuto(){
  if(sheetH>snaps()[1]+10)setSheet(snaps()[1],false);
  refit();renderAll();
 }
+
+/* ---------- 후보 카드: 눌러서 일정에 넣기 ----------
+   날마다 동선이 가장 덜 늘어나는 자리를 찾아, 그 자리와 늘어나는 이동시간(직선거리 추정)을 보여준다 */
+const cbox=$('#candbox');
+function candSlots(id){
+ const p=P[id];
+ return trip.days.map((d,i)=>{
+  const L=d.items.map(it=>P[it.id]);if(!L.length)return{i,pos:0,add:0,empty:true};
+  let pos=L.length,bc=1e9;
+  for(let k=0;k<=L.length;k++){const a=L[k-1],b=L[k],c=(a?dist(a,p):0)+(b?dist(p,b):0)-(a&&b?dist(a,b):0);if(c<bc){bc=c;pos=k;}}
+  return{i,pos,add:Math.max(1,Math.round(bc*1.35*1.2)),n:L.length};
+ });
+}
+function openCand(id){
+ const p=P[id],S=candSlots(id),full=S.filter(s=>!s.empty),best=full.length?full.reduce((a,b)=>b.add<a.add?b:a).i:-1;
+ phi=id;
+ cbox.innerHTML='<div class="shp cand" role="dialog" aria-label="후보를 일정에 넣기"><div class="nh"><span style="display:flex">'+pinSvg(p.c,24,true)+'</span><div style="flex:1;min-width:0"><b>'+p.n+'</b><div class="sub">'+[p.c,p.a||''].filter(Boolean).join(' · ')+'</div></div><button class="ib" data-cb="x" aria-label="닫기">'+ic('x')+'</button></div>'
+  +'<p class="sub" style="margin:0">어느 날에 넣을까요? 동선이 가장 덜 늘어나는 자리에 넣어요.</p><div class="cslots">'
+  +S.map(s=>'<button class="cslot'+(s.i===best?' rec':'')+'" data-cb="day" data-i="'+s.i+'" data-pos="'+s.pos+'"><span><i class="dot" style="background:'+COL[s.i%5]+'"></i><b>'+(s.i+1)+'일차</b> '+dlabel(s.i)+(s.i===best?' <em>추천</em>':'')+'</span><span class="sub">'+(s.empty?'비어 있는 날 · 첫 장소로':(s.pos+1)+'번째에 · 이동 +'+dur(s.add))+'</span></button>').join('')
+  +'</div><button class="chip big" data-cb="del">'+ic('trash',16)+'후보에서 빼기</button></div>';
+ cbox.classList.add('on');renderList();drawMap();
+}
+function closeCand(){cbox.classList.remove('on');phi=null;renderList();drawMap();}
+cbox.addEventListener('click',e=>{
+ const b=e.target.closest('[data-cb]');if(!b)return;const a=b.dataset.cb,id=phi;
+ if(a==='x'){closeCand();return;}
+ if(a==='day'){
+  const i=+b.dataset.i,pos=+b.dataset.pos,k=trip.pool.indexOf(id),items=trip.days[i].items;
+  trip.pool.splice(k,1);const it=item(id);items.splice(pos,0,it);
+  cbox.classList.remove('on');phi=null;
+  toast(P[id].n+' → '+(i+1)+'일차 '+(pos+1)+'번째에 넣었어요',()=>{items.splice(items.indexOf(it),1);trip.pool.splice(k,0,id);renderAll();});
+  renderAll();return;
+ }
+ if(a==='del'){const k=trip.pool.indexOf(id);trip.pool.splice(k,1);cbox.classList.remove('on');phi=null;toast(P[id].n+' 후보에서 뺐어요',()=>{trip.pool.splice(k,0,id);renderAll();});renderAll();}
+});
