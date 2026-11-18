@@ -17,3 +17,6 @@ function boot(){
   .catch(e=>{console.warn(e);init();toast('카카오맵을 불러오지 못해 예시 지도로 보여줘요');});
 }
 requestAnimationFrame(boot);
+/* 앱 설치(PWA): https 에서만 서비스 워커를 등록한다 */
+if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost'))
+ window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));

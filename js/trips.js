@@ -33,7 +33,7 @@ function thumb(t){
 function renderHome(){
  const S=TRIPS.map(t=>({t,s:tripState(t)})),now=S.filter(x=>!x.s.past).sort((a,b)=>a.t.start<b.t.start?-1:1),past=S.filter(x=>x.s.past).sort((a,b)=>a.t.start>b.t.start?-1:1);
  const L=htab==='now'?now:past;
- let h='<div class="hh"><h1>내 여행</h1></div><div class="htabs" role="tablist"><button role="tab" data-ht="now" aria-selected="'+(htab==='now')+'">이번 여행 '+now.length+'</button><button role="tab" data-ht="past" aria-selected="'+(htab==='past')+'">지난 여행 '+past.length+'</button></div><div class="hl">';
+ let h='<div class="hh"><h1>내 여행</h1><button class="chip" data-hs="1">'+ic('down',14)+'백업·설치</button></div><div class="htabs" role="tablist"><button role="tab" data-ht="now" aria-selected="'+(htab==='now')+'">이번 여행 '+now.length+'</button><button role="tab" data-ht="past" aria-selected="'+(htab==='past')+'">지난 여행 '+past.length+'</button></div><div class="hl">';
  if(!L.length)h+='<div class="empty"><p class="nm">'+(htab==='now'?'계획 중인 여행이 없어요':'지난 여행이 없어요')+'</p><p class="sub">'+(htab==='now'?'아래 "여행 추가"로 새 여행을 만들어 보세요.':'마지막 날이 지난 여행이 여기로 옮겨져요.')+'</p></div>';
  L.forEach(({t,s})=>{
   const n=t.days.reduce((a,d)=>a+d.items.length,0),open=hmenu===t.id;
