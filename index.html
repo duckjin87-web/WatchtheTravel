@@ -48,6 +48,15 @@
 <symbol id="i-swap" viewBox="0 0 24 24"><path d="M4 8h14l-3-3M20 16H6l3 3"/></symbol>
 </svg>
 
+<!-- 시작 화면: 처음 그려질 때부터 보이고, 앱 준비가 끝나면(최소 약 1.9초) 사라진다. 누르면 바로 넘어간다 -->
+<div id="splash" role="img" aria-label="여행 플래너 시작 화면">
+  <div class="sp-img"><img src="img/splash.jpg" alt="" width="840" height="840" decoding="async" fetchpriority="high"></div>
+  <b>여행 플래너</b>
+  <span class="sp-t">우리 가족 여행, 계획부터 기록까지</span>
+  <span class="sp-bar"><i></i></span>
+</div>
+<script>if(location.hash.indexOf('#s=')===0)document.getElementById('splash').remove();else document.body.classList.add('boot');</script>
+
 <div id="app">
   <div id="kmap" hidden></div>
   <svg id="map" role="img" aria-label="일정 경로 지도"></svg>
