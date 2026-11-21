@@ -104,6 +104,8 @@ function scene(){
   const rows=sched(sd);
   rows.forEach((r,i)=>{if(r.s)marks.push({p:along(r.s.path,.5),z:4,need:[r.p,rows[i+1].p],h:'<div class="kc" style="border-color:'+COL[sd%5]+'">'+(r.s.walk?ic('shoe',12):'')+r.s.min+'분</div>'});});
  }
+ if(tapL&&cbox.classList.contains('on'))tapL.forEach(id=>{const p=P[id],on=tapSel===id;
+  marks.push({p,z:on?10:8,h:'<div class="kp'+(on?' sv':' simple')+'" title="'+p.n+'">'+pinSvg(p.c,on?34:20,on)+(on?'<b>'+p.n+'</b>':'')+'</div>',click:()=>{tapSel=id;renderTapCard();drawMap();}});});
  if(srchOn())SRES.forEach(id=>{const p=P[id];if(!p)return;const on=spv===id;
   marks.push({p,z:on?10:8,h:'<div class="kp'+(on?' sv':' simple')+'" title="'+p.n+'">'+pinSvg(p.c,on?34:20,on)+(on?'<b>'+p.n+'</b>':'')+'</div>',click:()=>previewSearch(id)});});
  if(me){
