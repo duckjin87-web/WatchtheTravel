@@ -56,7 +56,12 @@ function kakaoMap(){
   });
  }
  K.event.addListener(km,'idle',draw);
- K.event.addListener(km,'click',()=>mapTap());
+ /* 지도 탭: 누른 좌표와, 화면에서 44px 거리를 km로 바꾼 반경을 넘긴다 (지도 위 가게 이름은 누를 수 없는 그림이라 주변을 검색한다) */
+ K.event.addListener(km,'click',e=>{
+  const ll=e.latLng,pt=proj(ll.getLat(),ll.getLng());let rk=.05;
+  try{const pj=km.getProjection(),c=pj.containerPointFromCoords(ll),q=pj.coordsFromContainerPoint(new K.Point(c.x+44,c.y));rk=dist(pt,proj(q.getLat(),q.getLng()));}catch(_){}
+  mapTap(pt,rk);
+ });
 
  /* 바텀시트에 가리지 않도록 아래쪽 여백을 시트 높이만큼 준다 */
  function fit(pts,extra){
@@ -98,5 +103,10 @@ function kakaoMap(){
   return null;
  }
 
- return{draw,fit,near,search};
+ /* 누른 자리 주변의 명소·음식점·카페·숙소 */
+ function around(pt,rKm,cb){
+  const g=unproj(pt.x,pt.y),loc=new K.LatLng(g.lat,g.lng),r=Math.max(20,Math.min(1000,Math.round(rKm*1000)));let n=4;const out=[];
+  ['AT4','FD6','CE7','AD5'].forEach(code=>ps.categorySearch(code,(d,st)=>{if(st===OK)d.forEach(x=>out.push(reg(x)));if(--n===0)cb(out);},{location:loc,radius:r,sort:K.services.SortBy.DISTANCE}));
+ }
+ return{draw,fit,near,search,around};
 }

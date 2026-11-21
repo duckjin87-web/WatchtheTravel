@@ -154,8 +154,45 @@ function openCand(id){
  cbox.classList.add('on');renderList();drawMap();
 }
 /* 지도 빈 곳을 탭하면 카드를 닫는다 (끌어서 움직인 것은 제외) */
-function mapTap(){if(cbox.classList.contains('on'))closeCand();}
-function closeCand(){cbox.classList.remove('on');phi=null;renderList();drawMap();}
+/* 지도 빈 곳을 탭: 카드가 열려 있으면 닫고, 아니면 누른 자리 주변 장소를 찾아 카드로 보여준다 (끌어서 움직인 것은 제외) */
+let tapL=null,tapSel=null;
+function mapTap(pt,rKm){
+ if(cbox.classList.contains('on')){closeCand();return;}
+ if(!pt||ord||prev||srchOn())return;
+ const done=L=>{
+  const seen={};L=L.filter(p=>p&&!seen[p.id]&&(seen[p.id]=1)).map(p=>({p,d:dist(pt,p)})).filter(e=>e.d<=rKm*1.5).sort((a,b)=>a.d-b.d).slice(0,5);
+  if(!L.length){toast('이 근처에서 장소를 찾지 못했어요. 장소 검색으로 찾아보세요');return;}
+  tapL=L.map(e=>e.p.id);tapSel=tapL[0];tapPt=pt;renderTapCard();cbox.classList.add('on');drawMap();
+ };
+ if(KM)KM.around(pt,rKm,done);else done(DB.filter(p=>dist(pt,p)<=rKm*1.5));
+}
+let tapPt=null;
+function closeCand(){cbox.classList.remove('on');phi=null;tapL=null;tapSel=null;renderList();drawMap();}
+/* 일정·후보 어디에 있는지 */
+function whereIs(id){
+ for(let i=0;i<trip.days.length;i++){const k=trip.days[i].items.findIndex(it=>it.id===id);if(k>-1)return(i+1)+'일차 '+(k+1)+'번째에 있어요';}
+ return trip.pool.indexOf(id)>-1?'후보에 있어요':'';
+}
+function renderTapCard(){
+ const p=P[tapSel],S=candSlots(tapSel),full=S.filter(s=>!s.empty),best=full.length?full.reduce((a,b)=>b.add<a.add?b:a).i:-1,w=whereIs(tapSel);
+ cbox.innerHTML='<div class="shp cand" role="dialog" aria-label="지도에서 고른 장소"><div class="nh"><b style="flex:1">지도에서 고른 곳 <span class="sub">'+tapL.length+'곳</span></b><button class="ib" data-tb="x" aria-label="닫기">'+ic('x')+'</button></div>'
+  +'<div class="trows">'+tapL.map(id=>{const q=P[id],wq=whereIs(id);return '<button class="trow'+(id===tapSel?' on':'')+'" data-tb="sel" data-id="'+id+'">'+pinSvg(q.c,22,true)+'<span><b>'+q.n+'</b><small>'+[q.c,tapPt?fmtD(dist(tapPt,q)):'',q.a||''].filter(Boolean).join(' · ')+'</small></span>'+(wq?'<em>'+(wq.indexOf('후보')===0?'후보':'일정')+'</em>':'')+'</button>';}).join('')+'</div>'
+  +'<p class="sub" style="margin:0"><b style="color:var(--ink)">'+p.n+'</b> '+(w?'· '+w:'어디에 넣을까요? 동선이 가장 덜 늘어나는 자리에 넣어요.')+'</p>'
+  +'<div class="cslots">'+S.map(s=>'<button class="cslot'+(s.i===best?' rec':'')+'" data-tb="day" data-i="'+s.i+'" data-pos="'+s.pos+'"><span><i class="dot" style="background:'+COL[s.i%5]+'"></i><b>'+(s.i+1)+'일차</b> '+dlabel(s.i)+(s.i===best?' <em>추천</em>':'')+'</span><span class="sub">'+(s.empty?'비어 있는 날 · 첫 장소로':(s.pos+1)+'번째에 · 이동 +'+dur(s.add))+'</span></button>').join('')+'</div>'
+  +'<div class="chips" style="margin:0">'+(trip.pool.indexOf(tapSel)<0?'<button class="chip" data-tb="pool">'+ic('pin',14)+'후보에 담기</button>':'')+(KM?'<a class="chip" href="'+kakaoUrl(p)+'" target="_blank" rel="noopener">카카오맵에서 보기</a>':'')+'</div></div>';
+}
+cbox.addEventListener('click',e=>{
+ const b=e.target.closest('[data-tb]');if(!b)return;const a=b.dataset.tb,id=tapSel;
+ if(a==='x'){closeCand();return;}
+ if(a==='sel'){tapSel=b.dataset.id;renderTapCard();drawMap();return;}
+ if(a==='pool'){trip.pool.push(id);closeCand();toast(P[id].n+' 후보에 담았어요',()=>{trip.pool.splice(trip.pool.indexOf(id),1);renderAll();});renderAll();return;}
+ if(a==='day'){
+  const i=+b.dataset.i,pos=+b.dataset.pos,items=trip.days[i].items,it=item(id),k=trip.pool.indexOf(id);
+  if(k>-1)trip.pool.splice(k,1);items.splice(pos,0,it);closeCand();
+  toast(P[id].n+' → '+(i+1)+'일차 '+(pos+1)+'번째에 넣었어요',()=>{items.splice(items.indexOf(it),1);if(k>-1)trip.pool.splice(k,0,id);renderAll();});
+  renderAll();
+ }
+});
 cbox.addEventListener('click',e=>{
  const b=e.target.closest('[data-cb]');if(!b)return;const a=b.dataset.cb,id=phi;
  if(a==='x'){closeCand();return;}

@@ -79,7 +79,14 @@ map.addEventListener('pointermove',e=>{
  }
  ptrs.set(e.pointerId,[e.clientX,e.clientY]);T={cx:V.cx,cy:V.cy,s:V.s};drawMap();
 });
-map.addEventListener('pointerup',e=>{ptrs.delete(e.pointerId);if(tap0&&Math.hypot(e.clientX-tap0[0],e.clientY-tap0[1])<6)mapTap();tap0=null;});
+map.addEventListener('pointerup',e=>{
+ ptrs.delete(e.pointerId);
+ if(tap0&&Math.hypot(e.clientX-tap0[0],e.clientY-tap0[1])<6){
+  const r=map.getBoundingClientRect(),b=vb();
+  mapTap({x:(e.clientX-r.left-W/2)/V.s+V.cx,y:(e.clientY-r.top-(b[0]+b[1])/2)/V.s+V.cy},44/V.s);
+ }
+ tap0=null;
+});
 map.addEventListener('pointercancel',e=>ptrs.delete(e.pointerId));
 map.addEventListener('wheel',e=>{e.preventDefault();V.s=Math.max(2.5,Math.min(160,V.s*(e.deltaY<0?1.15:.87)));T={cx:V.cx,cy:V.cy,s:V.s};drawMap();},{passive:false});
 

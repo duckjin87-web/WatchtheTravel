@@ -163,6 +163,11 @@ a.chip{text-decoration:none;color:inherit}
 .cslot.rec{border-color:var(--ink);border-width:2px;padding:9px 11px}
 .cslot em{font-style:normal;font-size:11px;font-weight:500;background:var(--ink);color:var(--paper);border-radius:8px;padding:0 6px;margin-left:4px}
 .kp.simple{filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.3))}
+.trows{display:grid;gap:4px}
+.trow{display:flex;align-items:center;gap:10px;text-align:left;border:1px solid var(--line);background:var(--paper);border-radius:10px;padding:8px 10px;cursor:pointer;font-size:14px}
+.trow span{flex:1;min-width:0;display:grid}.trow small{font-size:12px;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.trow.on{border-color:var(--ink);border-width:2px;padding:7px 9px}
+.trow em{font-style:normal;font-size:11px;background:var(--bg);color:var(--ink2);border-radius:8px;padding:0 6px;flex:none}
 #sharebox.on{display:block}
 .shd{position:absolute;inset:0;background:rgba(20,24,29,.4)}
 .shp{position:absolute;left:0;right:0;bottom:0;background:var(--paper);border-radius:16px 16px 0 0;padding:14px 16px calc(20px + env(safe-area-inset-bottom,0px));display:grid;gap:12px}
