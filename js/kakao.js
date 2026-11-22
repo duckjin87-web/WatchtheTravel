@@ -55,17 +55,7 @@ function kakaoMap(){
    pin(m.p,m.h,m.z,m.click);
   });
  }
- K.event.addListener(km,'idle',()=>{draw();clearTimeout(pq);pq=setTimeout(loadPoi,300);});
- /* 지도 위 장소 핀: 레벨 5 이하(약 100m 축척)로 확대하면 화면 안의 명소·음식점·카페·숙소를 받아 누를 수 있는 핀으로 그린다.
-    같은 영역은 다시 묻지 않는다 */
- let pq=0,poi=[];const pc={};
- function loadPoi(){
-  if(km.getLevel()>5){if(poi.length){poi=[];draw();}return;}
-  const b=km.getBounds(),sw=b.getSouthWest(),ne=b.getNorthEast(),k=km.getLevel()+':'+[sw.getLat(),sw.getLng(),ne.getLat(),ne.getLng()].map(v=>v.toFixed(3)).join(',');
-  if(pc[k]){poi=pc[k];draw();return;}
-  let n=4;const out=[];
-  ['AT4','FD6','CE7','AD5'].forEach(code=>ps.categorySearch(code,(d,st)=>{if(st===OK)d.forEach(x=>out.push(reg(x)));if(--n===0){pc[k]=out;poi=out;draw();}},{bounds:b}));
- }
+ K.event.addListener(km,'idle',draw);
  /* 지도 탭: 누른 좌표와, 화면에서 44px 거리를 km로 바꾼 반경을 넘긴다 (지도 위 가게 이름은 누를 수 없는 그림이라 주변을 검색한다) */
  K.event.addListener(km,'click',e=>{
   const ll=e.latLng,pt=proj(ll.getLat(),ll.getLng());let rk=.05;
@@ -118,5 +108,5 @@ function kakaoMap(){
   const g=unproj(pt.x,pt.y),loc=new K.LatLng(g.lat,g.lng),r=Math.max(20,Math.min(1000,Math.round(rKm*1000)));let n=4;const out=[];
   ['AT4','FD6','CE7','AD5'].forEach(code=>ps.categorySearch(code,(d,st)=>{if(st===OK)d.forEach(x=>out.push(reg(x)));if(--n===0)cb(out);},{location:loc,radius:r,sort:K.services.SortBy.DISTANCE}));
  }
- return{draw,fit,near,search,around,pois:()=>poi};
+ return{draw,fit,near,search,around};
 }

@@ -167,10 +167,6 @@ function mapTap(pt,rKm){
  if(KM)KM.around(pt,rKm,done);else done(DB.filter(p=>dist(pt,p)<=rKm*1.5));
 }
 let tapPt=null;
-function openTapAt(id){
- const p=P[id],near=(KM?KM.pois():mockPois()).filter(q=>q.id!==id&&dist(q,p)<=.15).sort((a,b)=>dist(a,p)-dist(b,p)).slice(0,4);
- tapPt={x:p.x,y:p.y};tapL=[id].concat(near.map(q=>q.id));tapSel=id;renderTapCard();cbox.classList.add('on');drawMap();
-}
 function closeCand(){cbox.classList.remove('on');phi=null;tapL=null;tapSel=null;renderList();drawMap();}
 /* 일정·후보 어디에 있는지 */
 function whereIs(id){
@@ -180,7 +176,7 @@ function whereIs(id){
 function renderTapCard(){
  const p=P[tapSel],S=candSlots(tapSel),full=S.filter(s=>!s.empty),best=full.length?full.reduce((a,b)=>b.add<a.add?b:a).i:-1,w=whereIs(tapSel);
  cbox.innerHTML='<div class="shp cand" role="dialog" aria-label="지도에서 고른 장소"><div class="nh"><b style="flex:1">지도에서 고른 곳 <span class="sub">'+tapL.length+'곳</span></b><button class="ib" data-tb="x" aria-label="닫기">'+ic('x')+'</button></div>'
-  +'<div class="trows">'+tapL.map(id=>{const q=P[id],wq=whereIs(id);return '<button class="trow'+(id===tapSel?' on':'')+'" data-tb="sel" data-id="'+id+'">'+pinSvg(q.c,22,true)+'<span><b>'+q.n+'</b><small>'+[q.c,tapPt&&dist(tapPt,q)>.005?fmtD(dist(tapPt,q)):'',q.a||''].filter(Boolean).join(' · ')+'</small></span>'+(wq?'<em>'+(wq.indexOf('후보')===0?'후보':'일정')+'</em>':'')+'</button>';}).join('')+'</div>'
+  +'<div class="trows">'+tapL.map(id=>{const q=P[id],wq=whereIs(id);return '<button class="trow'+(id===tapSel?' on':'')+'" data-tb="sel" data-id="'+id+'">'+pinSvg(q.c,22,true)+'<span><b>'+q.n+'</b><small>'+[q.c,tapPt?fmtD(dist(tapPt,q)):'',q.a||''].filter(Boolean).join(' · ')+'</small></span>'+(wq?'<em>'+(wq.indexOf('후보')===0?'후보':'일정')+'</em>':'')+'</button>';}).join('')+'</div>'
   +'<p class="sub" style="margin:0"><b style="color:var(--ink)">'+p.n+'</b> '+(w?'· '+w:'어디에 넣을까요? 동선이 가장 덜 늘어나는 자리에 넣어요.')+'</p>'
   +'<div class="cslots">'+S.map(s=>'<button class="cslot'+(s.i===best?' rec':'')+'" data-tb="day" data-i="'+s.i+'" data-pos="'+s.pos+'"><span><i class="dot" style="background:'+COL[s.i%5]+'"></i><b>'+(s.i+1)+'일차</b> '+dlabel(s.i)+(s.i===best?' <em>추천</em>':'')+'</span><span class="sub">'+(s.empty?'비어 있는 날 · 첫 장소로':(s.pos+1)+'번째에 · 이동 +'+dur(s.add))+'</span></button>').join('')+'</div>'
   +'<div class="chips" style="margin:0">'+(trip.pool.indexOf(tapSel)<0?'<button class="chip" data-tb="pool">'+ic('pin',14)+'후보에 담기</button>':'')+(KM?'<a class="chip" href="'+kakaoUrl(p)+'" target="_blank" rel="noopener">카카오맵에서 보기</a>':'')+'</div></div>';

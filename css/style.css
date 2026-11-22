@@ -163,7 +163,6 @@ a.chip{text-decoration:none;color:inherit}
 .cslot.rec{border-color:var(--ink);border-width:2px;padding:9px 11px}
 .cslot em{font-style:normal;font-size:11px;font-weight:500;background:var(--ink);color:var(--paper);border-radius:8px;padding:0 6px;margin-left:4px}
 .kp.simple{filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.3))}
-.kpoi{cursor:pointer;opacity:.92;filter:drop-shadow(0 1px 1px rgba(0,0,0,.25))}
 .trows{display:grid;gap:4px}
 .trow{display:flex;align-items:center;gap:10px;text-align:left;border:1px solid var(--line);background:var(--paper);border-radius:10px;padding:8px 10px;cursor:pointer;font-size:14px}
 .trow span{flex:1;min-width:0;display:grid}.trow small{font-size:12px;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
