@@ -69,7 +69,7 @@ function saveTrip(){
   if(!$('#home').classList.contains('on'))LAST={cur:trip.id,at:Date.now()};
   const places={};
   const keep=id=>{const p=P[id];if(p&&!places[id])places[id]={id,n:p.n,c:p.c,lat:p.lat,lng:p.lng,a:p.a,url:p.url,src:p.src};};
-  TRIPS.forEach(t=>{t.pool.forEach(keep);t.days.forEach(d=>d.items.forEach(it=>[it.id].concat(it.alts).forEach(keep)));});
+  TRIPS.forEach(t=>{t.pool.forEach(keep);t.days.forEach(d=>{if(d.from)keep(d.from);d.items.forEach(it=>[it.id].concat(it.alts).forEach(keep));});});
   localStorage.setItem(TKEY,JSON.stringify({cur:LAST.cur,at:LAST.at,trips:TRIPS.map(t=>({id:t.id,title:t.title,start:t.start,arch:t.arch,pool:t.pool,days:t.days})),places}));
  }catch(e){}
 }
@@ -88,7 +88,7 @@ function loadTrip(){
  });
  const ok=id=>P[id]&&(!KM||P[id].lat!=null);
  TRIPS=s.trips.filter(t=>t&&Array.isArray(t.days)&&t.days.length).map(t=>({id:String(t.id),title:t.title||'이름 없는 여행',start:t.start||trip.start,arch:typeof t.arch==='boolean'?t.arch:undefined,pool:(t.pool||[]).filter(ok),
-  days:t.days.map(d=>({start:d.start||'09:00',items:(d.items||[]).filter(it=>ok(it.id)).map(it=>({id:it.id,stay:it.stay||60,mode:it.mode==='walk'?'walk':'car',alts:(it.alts||[]).filter(ok),done:okDone(it.done)}))}))}));
+  days:t.days.map(d=>({start:d.start||'09:00',from:ok(d.from)?d.from:undefined,fmode:d.fmode==='walk'?'walk':undefined,items:(d.items||[]).filter(it=>ok(it.id)).map(it=>({id:it.id,stay:it.stay||60,mode:it.mode==='walk'?'walk':'car',alts:(it.alts||[]).filter(ok),done:okDone(it.done)}))}))}));
  LAST={cur:s.cur,at:s.at||0};
  trip=TRIPS.find(t=>t.id===s.cur)||TRIPS[0]||trip;
 }

@@ -1,5 +1,5 @@
 /* ---------- 목록 ---------- */
-const sumOf=rows=>({mins:rows.reduce((a,r)=>a+r.dm,0),km:rows.reduce((a,r)=>a+r.km,0)});
+const sumOf=rows=>{const L=rows.lead;return{mins:rows.reduce((a,r)=>a+r.dm,0)+(L?L.dm:0),km:rows.reduce((a,r)=>a+r.km,0)+(L?L.km:0)};};
 function renderTabs(){
  $('#tabs').innerHTML='<button class="tab" role="tab" aria-selected="'+all+'" data-day="all">전체</button>'
   +'<button class="tab" role="tab" aria-selected="'+pool+'" data-day="pool">'+ic('pin',14)+'후보 <span class="sub">'+trip.pool.length+'</span></button>'
@@ -7,7 +7,7 @@ function renderTabs(){
   +'<button class="tab" data-act="newday" aria-label="날짜 추가">'+ic('plus',16)+'</button>';
  if(pool){$('#sum').innerHTML='<span>후보 '+trip.pool.length+'곳 · 날짜를 정하지 않고 모아 둔 장소</span>';return;}
  if(all){
-  const R=trip.days.map((_,i)=>sched(i)),S=sumOf(R.flat());
+  const R=trip.days.map((_,i)=>sched(i)),S=R.map(sumOf).reduce((a,x)=>({mins:a.mins+x.mins,km:a.km+x.km}),{mins:0,km:0});
   $('#sum').innerHTML='<span>'+trip.days.length+'일 · '+R.reduce((a,r)=>a+r.length,0)+'곳 · 이동 '+dur(S.mins)+' · '+fmtD(S.km)+'</span>';
   return;
  }
@@ -30,6 +30,7 @@ function renderList(){
  else if(all)h=allList();
  else{
   const rows=sched(sd),c=COL[sd%5];
+  h+=fromRow(sd,rows,true);
   if(!rows.length)h+='<div class="empty"><p class="nm">'+(sd+1)+'일차 일정이 비어 있어요</p><p class="sub">방문지를 추가하면 이동 시간이 자동으로 계산돼요.</p></div>';
   rows.forEach((r,i)=>{
    const last=i===rows.length-1,open=sel===i,alts=r.it.alts;
@@ -48,12 +49,24 @@ function renderList(){
  }
  list.innerHTML=h;list.scrollTop=st;
 }
+/* 출발지 줄: 정했으면 "출발 · 장소 · 09:00 출발"과 1번까지 이동(차/도보), 안 정했으면 지정 버튼 */
+function fromRow(di,rows,edit){
+ const L=rows.lead,c=COL[di%5];
+ if(!L)return edit?'<button class="fromadd" data-act="from">'+ic('flag',16)+'출발지 지정 <span class="sub">지금은 1번 장소에서 시작해요</span></button>':'';
+ const w=L.s&&L.s.walk;
+ return '<div class="stop from"><div class="rail"><span class="num fl" style="background:'+c+'">'+ic('flag',13)+'</span>'+(rows.length?'<span class="line" style="background:'+c+'"></span>':'')+'</div><div class="main">'
+  +'<div class="card fcard">'+(edit?'<button class="cm" data-act="from">':'<div class="cm">')+'<div class="nm"><span class="ci" style="color:'+(CCOL[L.p.c]||'inherit')+'">'+cic(L.p.c,16)+'</span><span class="sub" style="margin-right:4px">출발</span>'+L.p.n+'</div><div class="tm">'+hm(L.dep)+' 출발</div>'+(edit?'</button>':'</div>')+'</div>'
+  +(L.s?'<div class="drive">'+(edit?'<span class="seg" role="group" aria-label="출발지에서 이동 수단"><button data-act="fmode" data-v="car" aria-pressed="'+!w+'">'+ic('car',14)+'차</button><button data-act="fmode" data-v="walk" aria-pressed="'+!!w+'">'+ic('shoe',14)+'도보</button></span>':ic(w?'shoe':'car',16))
+   +'<span>'+hm(L.dep)+' 출발 · '+(w?'도보 ':'차로 ')+dur(L.dm)+' · '+fmtD(L.km)+' · '+hm(L.dep+L.dm)+' 1번 도착'+(KM&&L.s.est&&!w?' · 직선 추정':'')+'</span></div>':'')
+  +'</div></div>';
+}
 /* 전체 탭: 날짜별로 이어서 보여주고, 누르면 그 날 그 방문지로 이동한다 */
 function allList(){
  let h='';
  trip.days.forEach((d,di)=>{
   const rows=sched(di),c=COL[di%5],S=sumOf(rows);
   h+='<button class="dtitle" data-act="day" data-day="'+di+'"><i class="dot" style="background:'+c+'"></i>'+(di+1)+'일차 '+dlabel(di)+'<span class="sub">'+d.start+' 시작 · '+rows.length+'곳 · 이동 '+dur(S.mins)+'</span></button>';
+  h+=fromRow(di,rows,false);
   if(!rows.length)h+='<p class="sub" style="margin:0 0 8px 32px">일정이 비어 있어요</p>';
   rows.forEach((r,i)=>{
    const last=i===rows.length-1;
@@ -115,6 +128,8 @@ list.addEventListener('click',e=>{
  if(a==='go'){pickStop(+b.dataset.day,i);return;}
  if(a==='day'){all=false;sd=+b.dataset.day;sel=null;ahi=null;refit();renderAll();return;}
  if(a==='open-search'){openSearch();return;}
+ if(a==='from'){openFrom(sd);return;}
+ if(a==='fmode'){trip.days[sd].fmode=v;renderAll();const L=sched(sd).lead;if(v==='walk'&&L&&L.km>3)toast('걷기에는 먼 거리예요 (도보 '+dur(L.dm)+')');return;}
  if(a==='order'){startOrder();return;}
  if(a==='auto'){ap=ap?null:{n:Math.max(1,trip.days.length),h:hotels()[0]||'',keep:true};renderList();return;}
  if(a==='apn'){ap.n=Math.max(1,Math.min(14,ap.n+ +v));renderList();return;}
@@ -221,7 +236,7 @@ $('#refit').addEventListener('click',()=>{sel=null;nb.hi=null;ahi=null;refit();r
 
 /* ---------- 검색 ---------- */
 /* lastQ: 후보에 담은 뒤 검색칸은 비우고, 직전 검색 결과는 새로 입력할 때까지 보여준다 */
-let spick=null,lastQ='';
+let spick=null,lastQ='',fromDay=null; /* fromDay: 출발지를 찾는 중인 날 */
 /* spv: 지도에서 보고 있는 검색 결과 / SRES: 지금 목록의 결과들(지도에 작은 핀) */
 let spv=null,SRES=[];
 const srchOn=()=>{const S=$('#search');return S.classList.contains('on')&&S.classList.contains('split');};
@@ -232,6 +247,7 @@ function previewSearch(id){
 }
 function openSearch(){spick=null;$('#search').classList.add('on');renderSearch();setTimeout(()=>$('#sq').focus(),50);}
 function closeSearch(){
+ fromDay=null;
  const was=srchOn();$('#search').classList.remove('on','split');$('#app').classList.remove('srch');sq='';lastQ='';$('#sq').value='';spv=null;SRES=[];
  if(was){refit();drawMap();}
 }
@@ -239,7 +255,7 @@ function closeSearch(){
 const picker=id=>'<div class="pick"><p class="sub">어디에 넣을까요?</p><div class="chips"><button class="chip" data-id="'+id+'" data-day="pool">'+ic('pin',14)+'후보에 담기</button>'+trip.days.map((d,i)=>'<button class="chip" data-id="'+id+'" data-day="'+i+'"><i class="dot" style="background:'+COL[i%5]+'"></i>'+(i+1)+'일차 '+dlabel(i)+'</button>').join('')+'</div></div>';
 function renderSearch(){
  $('#sc').innerHTML=['전체'].concat(CATS).map(v=>'<button class="chip" data-c="'+v+'" aria-pressed="'+(scat===v)+'">'+(v==='전체'?'':cic(v,14))+v+'</button>').join('');
- const q=sq.trim()||lastQ,inTrip={},note=!sq.trim()&&lastQ?'<p class="sub sq-last">"'+clean(lastQ)+'" 검색 결과 · 새 장소는 위 검색칸에 입력하세요</p>':'';
+ const q=sq.trim()||lastQ,inTrip={},note=(fromDay!=null?'<p class="sub sq-last">'+(fromAll?'모든 날':(fromDay+1)+'일차')+' 출발지로 쓸 곳을 찾아 "출발지로"를 누르세요</p>':'')+(!sq.trim()&&lastQ?'<p class="sub sq-last">"'+clean(lastQ)+'" 검색 결과 · 새 장소는 위 검색칸에 입력하세요</p>':'');
  trip.days.forEach((d,i)=>d.items.forEach(it=>{(inTrip[it.id]=inTrip[it.id]||[]).push(i+1+'일차');}));
  trip.pool.forEach(id=>{(inTrip[id]=inTrip[id]||[]).push('후보');});
  let res;
@@ -249,7 +265,7 @@ function renderSearch(){
   res=r.list;
  }else res=DB.filter(p=>(!KM||p.lat!=null)&&(scat==='전체'||p.c===scat)&&(!q||p.n.indexOf(q)>-1||p.c.indexOf(q)>-1)).slice(0,40);
  SRES=res.map(p=>p.id);if(srchOn())drawMap();
- $('#sres').innerHTML=note+(res.length?res.map(p=>'<div class="sr'+(spv===p.id?' on':'')+'" data-pv="'+p.id+'"><div>'+nameRow(p).replace('class="nm"','class="nm" style="font-size:14px"')+'<div class="sub">'+[p.c,p.r!=null?'<span class="star">★</span> '+p.r.toFixed(1)+' ('+p.v+')':'',p.a||'',inTrip[p.id]?inTrip[p.id].join(', ')+' 포함':''].filter(Boolean).join(' · ')+'</div></div><button class="chip" data-add="'+p.id+'" aria-expanded="'+(spick===p.id)+'">'+ic('plus',14)+'추가</button></div>'+(spick===p.id?picker(p.id):'')).join('')
+ $('#sres').innerHTML=note+(res.length?res.map(p=>'<div class="sr'+(spv===p.id?' on':'')+'" data-pv="'+p.id+'"><div>'+nameRow(p).replace('class="nm"','class="nm" style="font-size:14px"')+'<div class="sub">'+[p.c,p.r!=null?'<span class="star">★</span> '+p.r.toFixed(1)+' ('+p.v+')':'',p.a||'',inTrip[p.id]?inTrip[p.id].join(', ')+' 포함':''].filter(Boolean).join(' · ')+'</div></div>'+(fromDay!=null?'<button class="chip" data-from="'+p.id+'">'+ic('flag',14)+'출발지로</button>':'<button class="chip" data-add="'+p.id+'" aria-expanded="'+(spick===p.id)+'">'+ic('plus',14)+'추가</button>')+'</div>'+(spick===p.id?picker(p.id):'')).join('')
   :'<div class="empty"><p class="nm">검색 결과가 없어요</p><p class="sub">다른 이름이나 종류로 찾아보세요.</p></div>');
 }
 function addTo(id,di){
@@ -271,6 +287,7 @@ $('#sclose').addEventListener('click',closeSearch);
 $('#sq').addEventListener('input',e=>{sq=e.target.value;lastQ='';spick=null;renderSearch();});
 $('#sc').addEventListener('click',e=>{const b=e.target.closest('[data-c]');if(b){scat=b.dataset.c;spick=null;renderSearch();}});
 $('#sres').addEventListener('click',e=>{
+ const fb=e.target.closest('[data-from]');if(fb){setFrom(fromDay,fb.dataset.from,fromAll);closeSearch();return;}
  const ad=e.target.closest('[data-add]');
  if(ad){const id=ad.dataset.add;spick=spick===id?null:id;renderSearch();return;}
  const b=e.target.closest('[data-day]');if(b){addTo(b.dataset.id,b.dataset.day==='pool'?'pool':+b.dataset.day);return;}
