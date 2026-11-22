@@ -170,7 +170,7 @@ list.addEventListener('click',e=>{
 
 /* ---------- 끌어서 순서 바꾸기 ----------
    ≡ 손잡이를 잡거나, 카드를 0.4초 길게 누른 뒤 끈다. 끄는 동안에는 상세·차선책을 접어 카드만 움직인다.
-   목록 위·아래 가장자리 56px 안으로 끌면 목록이 저절로 스크롤된다(가장자리에 가까울수록 빠르게).
+   끄는 카드가 목록 위·아래 가장자리에 걸치면 목록이 저절로 스크롤된다(깊이 따라 속도, 아래 dragTick 설명).
    위치 계산은 스크롤된 만큼과 접어서 움직인 만큼(adj)을 더해 내용 기준으로 한다. 출발지 줄(.from)은 순서에 들어가지 않는다 */
 let drag=null,lp=null,dragEnd=0;
 function startDrag(pid,y,el,i){
@@ -178,7 +178,8 @@ function startDrag(pid,y,el,i){
  list.classList.add('dragmode');
  const rows=[...list.querySelectorAll('.stop:not(.from)')];if(!rows[i]){list.classList.remove('dragmode');return;}
  try{el.setPointerCapture(pid);}catch(_){}
- drag={i,to:i,y0:y,y,adj:g0-el.getBoundingClientRect().top,s0:list.scrollTop,rows,box:rows.map(r=>r.getBoundingClientRect()),raf:0};
+ const cb=(rows[i].querySelector('.card')||rows[i]).getBoundingClientRect();
+ drag={i,to:i,y0:y,y,adj:g0-el.getBoundingClientRect().top,s0:list.scrollTop,rows,box:rows.map(r=>r.getBoundingClientRect()),cb,raf:0};
  rows[i].classList.add('dragging');dragMove();drag.raf=requestAnimationFrame(dragTick);
  if(navigator.vibrate)try{navigator.vibrate(12);}catch(_){}
 }
@@ -197,12 +198,20 @@ function dragMove(){
   r.style.transform=t?'translateY('+t+'px)':'';
  });
 }
-function dragTick(){
+/* 자동 스크롤: 끄는 카드(이동 줄 제외)가 목록 위·아래 가장자리 72px 안으로 들어간 깊이(k)에 따라 속도가 바뀐다.
+   살짝 걸치면 초당 약 40px로 천천히, 가장자리를 넘을 만큼 밀면 최대 초당 480px. 시간 기준이라 기기마다 같다.
+   카드를 그 방향으로 4px 넘게 움직였을 때만 스크롤한다(처음부터 가장자리에 있던 카드가 저절로 흘러가지 않게) */
+function dragTick(now){
  if(!drag)return;
- const r=list.getBoundingClientRect(),z=56,y=drag.y;
- const v=y<r.top+z?-Math.min(18,Math.ceil((r.top+z-y)/3)):(y>r.bottom-z?Math.min(18,Math.ceil((y-r.bottom+z)/3)):0);
- if(v){const s=list.scrollTop;list.scrollTop=s+v;if(list.scrollTop!==s)dragMove();}
- drag.raf=requestAnimationFrame(dragTick);
+ const d=drag,dt=d.t?Math.min(50,now-d.t):0;d.t=now;
+ const r=list.getBoundingClientRect(),z=72,b=d.cb,off=d.y-d.y0+d.adj,top=b.top+off,bot=b.bottom+off;
+ const up=off<-4?r.top+z-top:0,dn=off>4?bot-(r.bottom-z):0,depth=up>0?-up:(dn>0?dn:0);
+ if(depth&&dt){
+  const k=Math.min(1.5,Math.abs(depth)/z),v=Math.min(480,30+260*k*k)*Math.sign(depth);
+  d.acc=(d.acc||0)+v*dt/1000;const step=Math.trunc(d.acc);
+  if(step){const s0=list.scrollTop;list.scrollTop=s0+step;d.acc-=step;if(list.scrollTop!==s0)dragMove();else d.acc=0;}
+ }else d.acc=0;
+ d.raf=requestAnimationFrame(dragTick);
 }
 list.addEventListener('pointermove',e=>{
  if(lp&&e.pointerId===lp.id&&Math.hypot(e.clientX-lp.x,e.clientY-lp.y)>8){clearTimeout(lp.t);lp=null;}
