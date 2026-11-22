@@ -81,6 +81,9 @@ button.card.cm{padding:10px 12px;background:var(--paper);border:1px solid var(--
 .ckin{border:1px solid var(--line);border-radius:8px;padding:3px 5px;font-size:13px;background:var(--paper);color:var(--ink)}
 .stop.done .card .cm,.stop.done .card.cm{opacity:.6}
 .grip{touch-action:none;cursor:grab}
+.stop .card,.grip{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.dragmode .detail,.dragmode .alts{display:none}
+.stop.dragging .card{box-shadow:0 8px 20px rgba(0,0,0,.18);border-color:var(--ink)}
 .stop{transition:transform .15s ease}.stop.dragging{position:relative;z-index:2;transition:none;opacity:.92}
 .ci{display:inline-flex;vertical-align:-3px;margin-right:6px;color:var(--ink2)}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:14px;overflow:hidden;flex:none}
