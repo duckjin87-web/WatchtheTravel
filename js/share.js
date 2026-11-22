@@ -17,7 +17,7 @@ async function unpack(str){
 function tripPayload(t){
  const p={};
  const keep=id=>{const q=P[id];if(q&&!p[id])p[id]={n:q.n,c:q.c,lat:q.lat,lng:q.lng,a:q.a,url:q.url};};
- t.pool.forEach(keep);t.days.forEach(d=>d.items.forEach(it=>[it.id].concat(it.alts).forEach(keep)));
+ t.pool.forEach(keep);t.days.forEach(d=>{if(d.from)keep(d.from);d.items.forEach(it=>[it.id].concat(it.alts).forEach(keep));});
  return{v:1,t:{title:t.title,start:t.start,pool:t.pool,days:t.days},p};
 }
 async function shareUrl(t){return location.origin+location.pathname+'#s='+await pack(tripPayload(t));}
@@ -33,7 +33,7 @@ function readPayload(o){
   DB.push(p);P[id]=p;
  });
  const ok=id=>typeof id==='string'&&P[id]&&(!KM||P[id].lat!=null);
- const days=o.t.days.slice(0,30).map(d=>({start:/^\d\d:\d\d$/.test(d&&d.start)?d.start:'09:00',
+ const days=o.t.days.slice(0,30).map(d=>({start:/^\d\d:\d\d$/.test(d&&d.start)?d.start:'09:00',from:d&&ok(d.from)?d.from:undefined,fmode:d&&d.fmode==='walk'?'walk':undefined,
   items:((d&&d.items)||[]).filter(it=>it&&ok(it.id)).slice(0,60).map(it=>({id:it.id,stay:Math.max(30,Math.min(720,+it.stay||60)),mode:it.mode==='walk'?'walk':'car',alts:(Array.isArray(it.alts)?it.alts:[]).filter(ok).slice(0,10),done:okDone(it.done)}))}));
  return{id:'s'+Date.now().toString(36),title:clean(o.t.title).slice(0,40)||'공유받은 여행',start:/^\d{4}-\d\d-\d\d$/.test(o.t.start)?o.t.start:todayIso(),pool:(Array.isArray(o.t.pool)?o.t.pool:[]).filter(ok).slice(0,100),days,shared:true};
 }
@@ -44,7 +44,9 @@ function tripText(t){
  let s='['+t.title+'] '+mdw(t.start)+(t.days.length>1?' – '+mdw(addDays(t.start,t.days.length-1)):'')+' · '+nights(t.days.length)+'\n';
  t.days.forEach((d,i)=>{
   s+='\n■ '+(i+1)+'일차 '+dlabel(i)+'\n';
-  const rows=sched(i);if(!rows.length)s+='(일정 없음)\n';
+  const rows=sched(i),L=rows.lead;
+  if(L){s+=hm(L.dep)+' 출발 '+L.p.n+'\n';if(L.s)s+='   ↓ '+(L.s.walk?'도보 ':'차 ')+dur(L.dm)+' · '+fmtD(L.km)+'\n';}
+  if(!rows.length)s+='(일정 없음)\n';
   rows.forEach(r=>{s+=hm(r.arr)+'–'+hm(r.dep)+' '+r.p.n+' ('+r.p.c+')\n';if(r.s)s+='   ↓ '+(r.s.walk?'도보 ':'차 ')+dur(r.dm)+' · '+fmtD(r.km)+'\n';});
  });
  if(t.pool.length)s+='\n후보: '+t.pool.map(id=>P[id].n).join(', ')+'\n';

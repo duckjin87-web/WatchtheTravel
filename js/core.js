@@ -43,8 +43,11 @@ function seg(a,b,mode){
  if(mode==='walk'){const km=d*1.25;return{walk:true,est:true,km,min:Math.max(1,Math.round(km/4.5*60)),path:[a,b]};}
  return route(a,b)||{est:true,km:d*1.35,min:Math.max(3,Math.round(d*1.35*1.2)),path:[a,b]};
 }
+/* 출발지(d.from): 그 날 1번 장소 전에 출발하는 곳(숙소·집 등). 정하면 시작 시각에 그곳을 떠나 1번까지 이동한 시간이 일정에 들어간다 */
+const fromP=di=>{const d=trip.days[di],f=d&&d.from&&P[d.from];return f&&(!KM||f.lat!=null)?f:null;};
 function sched(di){
- const d=trip.days[di];let t=toMin(d.start);const rows=[];
+ const d=trip.days[di];let t=toMin(d.start);const rows=[],f=fromP(di),first=d.items[0];
+ if(f){const s=first&&first.id!==f.id?seg(f,P[first.id],d.fmode):null;rows.lead={p:f,dep:t,s,dm:s?s.min:0,km:s?s.km:0};t+=s?s.min:0;}
  d.items.forEach((it,i)=>{
   /* 방문 완료(it.done, 분)를 누른 곳은 그 시각이 실제 출발 시각이 되고, 뒤 일정이 모두 그만큼 밀리거나 당겨진다.
      예정 도착보다 먼저 떠났으면 도착도 그 시각으로 본다 */
@@ -70,7 +73,12 @@ function scene(){
  const dv=!all&&!pool,order=trip.days.map((_,i)=>i).filter(i=>!dv||i!==sd);if(dv)order.push(sd);
  order.forEach(di=>{
   const on=all||(dv&&di===sd),c=COL[di%5];
-  sched(di).forEach(r=>{
+  const R=sched(di),L=R.lead;
+  if(L){
+   if(L.s)lines.push({pts:L.s.path,c,w:on?4.5:3,op:on?1:.4,halo:true,z:on?2:1});
+   if(on)marks.push({p:L.p,z:6,h:'<div class="kfrom">'+pinSvg(L.p.c,26,true)+'<span class="no">출발</span>'+(all?'':'<b>'+L.p.n+'</b>')+'</div>',click:()=>{pickStop(di,null);openFrom(di);}});
+  }
+  R.forEach(r=>{
    if(!r.s)return;
    lines.push({pts:r.s.path,c,w:on?4.5:3,op:on?1:.4,halo:true,z:on?2:1});
    if(r.s.walk&&on)[.25,.75].forEach(f=>marks.push({p:along(r.s.path,f),z:3,h:'<div class="kshoe" style="color:'+c+'">'+ic('shoe',13)+'</div>'}));

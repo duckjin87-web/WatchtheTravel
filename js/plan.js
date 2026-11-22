@@ -205,3 +205,39 @@ cbox.addEventListener('click',e=>{
  }
  if(a==='del'){const k=trip.pool.indexOf(id);trip.pool.splice(k,1);cbox.classList.remove('on');phi=null;toast(P[id].n+' 후보에서 뺐어요',()=>{trip.pool.splice(k,0,id);renderAll();});renderAll();}
 });
+
+/* ---------- 출발지 고르기 ----------
+   전날 마지막 장소, 일정·후보의 숙소, 그 밖의 등록된 장소 순으로 보여주고, 다른 곳은 검색해서 정한다 */
+let fromAll=false;
+function fromChoices(di){
+ const out=[],seen=new Set(),add=(id,tag)=>{if(!id||seen.has(id)||!P[id])return;seen.add(id);out.push({id,tag});};
+ if(di>0){const pd=trip.days[di-1].items;if(pd.length)add(pd[pd.length-1].id,'전날 마지막');}
+ const ids=trip.days.flatMap(d=>d.items.map(it=>it.id)).concat(trip.pool,trip.days.map(d=>d.from).filter(Boolean));
+ ids.forEach(id=>{if(P[id]&&P[id].c==='숙소')add(id,'숙소');});
+ ids.forEach(id=>add(id,''));
+ return out.slice(0,12);
+}
+function openFrom(di){
+ const d=trip.days[di],L=fromChoices(di);
+ cbox.innerHTML='<div class="shp cand" role="dialog" aria-label="'+(di+1)+'일차 출발지"><div class="nh"><b style="flex:1">'+(di+1)+'일차 출발지</b><button class="ib" data-fr="x" aria-label="닫기">'+ic('x')+'</button></div>'
+  +'<p class="sub" style="margin:0">하루를 시작하는 곳이에요. 정하면 '+d.start+'에 그곳을 떠나 1번 장소까지 가는 시간이 일정에 들어가요.</p>'
+  +'<div class="trows"><button class="trow'+(!d.from?' on':'')+'" data-fr="none">'+ic('flag',20)+'<span><b>1번 장소에서 시작</b><small>출발지 없이 지금처럼</small></span></button>'
+  +L.map(o=>'<button class="trow'+(d.from===o.id?' on':'')+'" data-fr="set" data-id="'+o.id+'">'+pinSvg(P[o.id].c,22,true)+'<span><b>'+P[o.id].n+'</b><small>'+[o.tag,P[o.id].c].filter(Boolean).join(' · ')+'</small></span></button>').join('')
+  +'<button class="trow" data-fr="search">'+ic('search',20)+'<span><b>다른 곳 검색해서 지정</b><small>집, 공항, 숙소 등 등록되지 않은 곳</small></span></button></div>'
+  +(trip.days.length>1?'<label class="arow" for="fr-all"><span>모든 날 같은 출발지로</span><input type="checkbox" id="fr-all"'+(fromAll?' checked':'')+'></label>':'')+'</div>';
+ cbox.dataset.fd=di;cbox.classList.add('on');
+}
+function setFrom(di,id,allDays){
+ const ds=allDays?trip.days:[trip.days[di]],before=ds.map(d=>d.from);
+ ds.forEach(d=>{if(id)d.from=id;else delete d.from;});
+ toast(id?(allDays?'모든 날':(di+1)+'일차')+' 출발지를 '+P[id].n+'(으)로 정했어요':(di+1)+'일차는 1번 장소에서 시작해요',()=>{ds.forEach((d,k)=>{if(before[k])d.from=before[k];else delete d.from;});refit();renderAll();});
+ fromAll=false;refit();renderAll();
+}
+cbox.addEventListener('click',e=>{
+ const b=e.target.closest('[data-fr]');if(!b)return;const a=b.dataset.fr,di=+cbox.dataset.fd;
+ if(a==='x'){closeCand();return;}
+ if(a==='none'){closeCand();setFrom(di,null,fromAll);return;}
+ if(a==='set'){closeCand();setFrom(di,b.dataset.id,fromAll);return;}
+ if(a==='search'){closeCand();openSearch();fromDay=di;renderSearch();}
+});
+cbox.addEventListener('change',e=>{if(e.target.id==='fr-all')fromAll=e.target.checked;});

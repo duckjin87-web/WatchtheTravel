@@ -6,7 +6,7 @@ const BKEY='wt.backupAt';
 function backupData(){
  const places={};
  const keep=id=>{const q=P[id];if(q&&!places[id])places[id]={n:q.n,c:q.c,lat:q.lat,lng:q.lng,a:q.a,url:q.url};};
- TRIPS.forEach(t=>{t.pool.forEach(keep);t.days.forEach(d=>d.items.forEach(it=>[it.id].concat(it.alts).forEach(keep)));});
+ TRIPS.forEach(t=>{t.pool.forEach(keep);t.days.forEach(d=>{if(d.from)keep(d.from);d.items.forEach(it=>[it.id].concat(it.alts).forEach(keep));});});
  return JSON.stringify({app:'watchthetravel',v:1,at:new Date().toISOString(),trips:TRIPS.map(t=>({id:t.id,title:t.title,start:t.start,arch:t.arch,pool:t.pool,days:t.days})),places});
 }
 /* 파일 이름은 영문으로: 한글 이름은 일부 브라우저가 무시하고 "download"로 저장한다 */

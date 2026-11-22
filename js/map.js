@@ -62,7 +62,7 @@ function refit(){
  if(pool||ord)fitTo((ord?dayPts(sd):allPts()).concat(trip.pool.map(id=>P[id])));
  else if(all)fitTo(allPts().concat(trip.pool.map(id=>P[id])));
  else if(sel!=null&&trip.days[sd].items[sel])fitTo([curP()].concat(trip.days[sd].items[sel].alts.map(id=>P[id])),nb.r);
- else fitTo(dayPts(sd));
+ else{const f=fromP(sd);fitTo(f?[f].concat(dayPts(sd)):dayPts(sd));}
 }
 
 /* ---------- 지도 제스처 ---------- */
