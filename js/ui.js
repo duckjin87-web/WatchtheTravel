@@ -25,6 +25,7 @@ function driveRow(r,i,edit){
 }
 const nameRow=p=>'<div class="nm"><span class="ci" style="color:'+(CCOL[p.c]||'inherit')+'">'+cic(p.c,16)+'</span>'+p.n+'</div>';
 function renderList(){
+ if(drag)return; /* 끄는 중에는 다시 그리지 않는다(끝나면 다시 그림) */
  const st=list.scrollTop;let h='';
  if(pool)h=poolList();
  else if(all)h=allList();
@@ -168,18 +169,28 @@ list.addEventListener('click',e=>{
 });
 
 /* ---------- 끌어서 순서 바꾸기 ----------
+   ≡ 손잡이를 잡거나, 카드를 0.4초 길게 누른 뒤 끈다. 끄는 동안에는 상세·차선책을 접어 카드만 움직인다.
    목록 위·아래 가장자리 56px 안으로 끌면 목록이 저절로 스크롤된다(가장자리에 가까울수록 빠르게).
-   위치 계산은 스크롤된 만큼(ds)을 더해 내용 기준으로 한다 */
-let drag=null;
+   위치 계산은 스크롤된 만큼과 접어서 움직인 만큼(adj)을 더해 내용 기준으로 한다. 출발지 줄(.from)은 순서에 들어가지 않는다 */
+let drag=null,lp=null,dragEnd=0;
+function startDrag(pid,y,el,i){
+ const g0=el.getBoundingClientRect().top;
+ list.classList.add('dragmode');
+ const rows=[...list.querySelectorAll('.stop:not(.from)')];if(!rows[i]){list.classList.remove('dragmode');return;}
+ try{el.setPointerCapture(pid);}catch(_){}
+ drag={i,to:i,y0:y,y,adj:g0-el.getBoundingClientRect().top,s0:list.scrollTop,rows,box:rows.map(r=>r.getBoundingClientRect()),raf:0};
+ rows[i].classList.add('dragging');dragMove();drag.raf=requestAnimationFrame(dragTick);
+ if(navigator.vibrate)try{navigator.vibrate(12);}catch(_){}
+}
 list.addEventListener('pointerdown',e=>{
- const g=e.target.closest('[data-drag]');if(!g||all)return;
- e.preventDefault();g.setPointerCapture(e.pointerId);
- const rows=[...list.querySelectorAll('.stop')],i=+g.dataset.drag;
- drag={i,to:i,y0:e.clientY,y:e.clientY,s0:list.scrollTop,rows,box:rows.map(r=>r.getBoundingClientRect()),raf:0};
- rows[i].classList.add('dragging');drag.raf=requestAnimationFrame(dragTick);
+ if(all||pool||drag)return;
+ const g=e.target.closest('[data-drag]');
+ if(g){e.preventDefault();startDrag(e.pointerId,e.clientY,g,+g.dataset.drag);return;}
+ const c=e.target.closest('.stop:not(.from) .cm[data-i]');
+ if(c)lp={id:e.pointerId,x:e.clientX,y:e.clientY,t:setTimeout(()=>{const l=lp;lp=null;startDrag(l.id,l.y,c,+c.dataset.i);},400)};
 });
 function dragMove(){
- const d=drag,dy=d.y-d.y0+list.scrollTop-d.s0,b=d.box[d.i],cy=(b.top+b.bottom)/2+dy;
+ const d=drag,dy=d.y-d.y0+d.adj+list.scrollTop-d.s0,b=d.box[d.i],cy=(b.top+b.bottom)/2+dy;
  d.to=d.box.filter((r,k)=>k!==d.i&&cy>(r.top+r.bottom)/2).length;
  d.rows.forEach((r,k)=>{
   const t=k===d.i?dy:(d.i<d.to&&k>d.i&&k<=d.to?-b.height:(d.to<d.i&&k>=d.to&&k<d.i?b.height:0));
@@ -193,19 +204,29 @@ function dragTick(){
  if(v){const s=list.scrollTop;list.scrollTop=s+v;if(list.scrollTop!==s)dragMove();}
  drag.raf=requestAnimationFrame(dragTick);
 }
-list.addEventListener('pointermove',e=>{if(!drag)return;drag.y=e.clientY;dragMove();});
-function endDrag(){
- if(!drag)return;const d=drag;drag=null;cancelAnimationFrame(d.raf);
+list.addEventListener('pointermove',e=>{
+ if(lp&&e.pointerId===lp.id&&Math.hypot(e.clientX-lp.x,e.clientY-lp.y)>8){clearTimeout(lp.t);lp=null;}
+ if(!drag)return;drag.y=e.clientY;dragMove();
+});
+/* 끄는 중에는 화면이 스크롤되지 않게 (길게 눌러 시작한 경우) */
+list.addEventListener('touchmove',e=>{if(drag)e.preventDefault();},{passive:false});
+function endDrag(commit){
+ if(lp){clearTimeout(lp.t);lp=null;}
+ if(!drag)return;const d=drag;drag=null;cancelAnimationFrame(d.raf);dragEnd=Date.now();
+ list.classList.remove('dragmode');
  d.rows.forEach(r=>{r.style.transform='';r.classList.remove('dragging');});
- if(d.to!==d.i){
+ if(commit&&d.to!==d.i){
   const items=trip.days[sd].items,cur=sel!=null?items[sel]:null,x=items.splice(d.i,1)[0];
   items.splice(d.to,0,x);sel=cur?items.indexOf(cur):null;refit();
-  toast(P[x.id].n+' → '+(d.to+1)+'번째로 옮겼어요');
+  toast(P[x.id].n+' → '+(d.to+1)+'번째로 옮겼어요',()=>{items.splice(items.indexOf(x),1);items.splice(d.i,0,x);sel=cur?items.indexOf(cur):null;refit();renderAll();});
  }
  renderAll();
 }
-list.addEventListener('pointerup',endDrag);
-list.addEventListener('pointercancel',endDrag);
+list.addEventListener('pointerup',()=>endDrag(true));
+/* 휴대폰이 끌기를 가로채면(스크롤 등) 순서는 바꾸지 않고 원래대로 */
+list.addEventListener('pointercancel',()=>endDrag(false));
+/* 끌기를 마친 직후의 클릭(카드 펼치기 등)은 무시 */
+list.addEventListener('click',e=>{if(Date.now()-dragEnd<400){e.stopPropagation();e.preventDefault();}},true);
 
 $('#tabs').addEventListener('click',e=>{
  const b=e.target.closest('button');if(!b)return;
