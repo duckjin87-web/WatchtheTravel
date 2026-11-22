@@ -104,6 +104,12 @@ function scene(){
   const rows=sched(sd);
   rows.forEach((r,i)=>{if(r.s)marks.push({p:along(r.s.path,.5),z:4,need:[r.p,rows[i+1].p],h:'<div class="kc" style="border-color:'+COL[sd%5]+'">'+(r.s.walk?ic('shoe',12):'')+r.s.min+'분</div>'});});
  }
+ if(!ord&&!prev&&!srchOn()){
+  const used=new Set(trip.pool);trip.days.forEach(d=>d.items.forEach(it=>used.add(it.id)));
+  if(circle)nearby().forEach(e=>used.add(e.p.id));
+  (KM?KM.pois():mockPois()).forEach(p=>{if(used.has(p.id)||(tapL&&tapL.indexOf(p.id)>-1))return;
+   marks.push({p,z:3,h:'<div class="kpoi" title="'+p.n+'">'+pinSvg(p.c,20,false)+'</div>',click:()=>openTapAt(p.id)});});
+ }
  if(tapL&&cbox.classList.contains('on'))tapL.forEach(id=>{const p=P[id],on=tapSel===id;
   marks.push({p,z:on?10:8,h:'<div class="kp'+(on?' sv':' simple')+'" title="'+p.n+'">'+pinSvg(p.c,on?34:20,on)+(on?'<b>'+p.n+'</b>':'')+'</div>',click:()=>{tapSel=id;renderTapCard();drawMap();}});});
  if(srchOn())SRES.forEach(id=>{const p=P[id];if(!p)return;const on=spv===id;
