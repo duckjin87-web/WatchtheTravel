@@ -57,6 +57,12 @@ function fitTo(pts,extra){
  }
  go();
 }
+/* 지도 위 장소 핀 (도식 지도): 충분히 확대했을 때 화면 안의 예시 장소 */
+function mockPois(){
+ if(V.s<14)return[];
+ const b=vb(),x0=V.cx-W/2/V.s,x1=V.cx+W/2/V.s,y0=V.cy-(b[0]+b[1])/2/V.s,y1=y0+H/V.s;
+ return DB.filter(p=>p.x>=x0&&p.x<=x1&&p.y>=y0&&p.y<=y1).slice(0,80);
+}
 function refit(){
  if(srchOn()&&spv&&P[spv]){fitTo([P[spv]]);return;}
  if(pool||ord)fitTo((ord?dayPts(sd):allPts()).concat(trip.pool.map(id=>P[id])));
